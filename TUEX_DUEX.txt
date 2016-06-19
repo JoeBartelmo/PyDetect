@@ -1,0 +1,14 @@
+add a better logging system --> give the user the option to only log certain types of data
+overall make the code less trash --> add more objects to simplifiy things?
+								 '--> right now, Mars is very bloated
+add install functions
+make arrays dictionary so Tyler or I can access them easily
+
+only close files on SystemExit
+remove functions not currently being called to new files
+
+create multiple classes
+	subclasses to pass into the MARS objects --> builder pattern
+
+
+webstorm made by jetbeans

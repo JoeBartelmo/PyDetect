@@ -1,0 +1,16 @@
+Primary Controlling Computer:::
+	
+	Nvidia Jetson TK1 (Phobos)
+		This is powerful embedded system built specifically for the purposes of computer vision. This computer was chosen because of it's GPU hardware acceleration which can be used to optimize many processes--> especially those that involve encoding or processing video.	The extra computing power available in this system means that the capabilities of Mars can be expanded with more sensor packages such as laser scanners or structered light imaging systems without the need to upgrade the primary control computer.
+
+
+		The TK1 runs a version of Ubuntu Linux known as Linux for Tegra and comes pre-packaged with all software needed for the operations of Mars.
+
+
+Interface Controller:::
+	
+	Arduino Uno (Deimos)
+		In order to interface with the motor controller provided to our team by Maxon Motors, an arduino microcontroller is used. This arduino is connected to the TK1 over a serial bus. 
+
+		The software provided on the TK1 will facilitate communication to the Arduino.
+
