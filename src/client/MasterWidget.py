@@ -36,9 +36,13 @@ class MasterWidget(tk.Frame):
         for s in self.streams:
             s.play()
 
+        self.after_id = self.after(30, self.play)
+
     def pause(self):
-        for s in self.streams:
-            s.pause()
+        for i in range(50):
+            if self.after_id is not None:
+                self.after_cancel(self.after_id)
+                self.after_id = None
 
     def move(self, *args):
         for s in self.streams:

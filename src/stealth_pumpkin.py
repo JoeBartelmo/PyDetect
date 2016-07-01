@@ -17,13 +17,14 @@ def stealth_pumpkin(img, img_keypoints, block_size=8):
 
     return counts
     
-def sneaky_squash(ideal_counts, frame_counts, threshold=0):
+def sneaky_squash(ideal_counts, frame_counts, threshold=5):
     delta = numpy.absolute(ideal_counts - frame_counts)
-    return numpy.where(delta > threshold)
+    print delta.shape
+    return delta[delta>=threshold]
 
-def script(in_q, out_q1):
+def script(in_q, out_q1, ideal_image_file):
     # load ideal image
-    ideal_image = cv2.imread('/home/nathan/python/PyDetect/src/client/assets/webcam.jpg')
+    ideal_image = cv2.imread(ideal_image_file)
 
     fast = cv2.FastFeatureDetector()
 
@@ -45,27 +46,33 @@ def script(in_q, out_q1):
         out_image = highlight.highlight(q_image, pumpkins_indexes, color=(255,0,0))
         out_q1.put(out_image)
 
+def demosaic(input_im):
+    gray = cv2.cvtColor(input_im, cv2.COLOR_RGB2GRAY)
+    img = cv2.cvtColor(gray, cv2.COLOR_BAYER_GR2RGB)
+    return img
 
 if __name__=='__main__':
-    v = cv2.VideoCapture(0)
+    v = cv2.VideoCapture(1)
+    fast = cv2.FastFeatureDetector()
 
     f, frame = v.read()
-    fast = cv2.FastFeatureDetector()
-    ideal_image_kp = fast.detect(frame, None)
-    pump = stealth_pumpkin(frame, ideal_image_kp)
-    
-    for i in range(60):
-        f, frame = v.read()
+    img = demosaic(frame)
+    ideal_image_kp = fast.detect(img, None)
+    pump = stealth_pumpkin(img, ideal_image_kp)
 
     raw_input('Press Enter')
     f, frame2 = v.read()
-    frame_kp = fast.detect(frame2, None)
+    img2 = demosaic(frame2)
+    frame2_kp = fast.detect(img2, None)
+    squash = stealth_pumpkin(img2, frame2_kp)
 
-    squash = stealth_pumpkin(frame, frame_kp)
+    pumpkins_indexes = sneaky_squash(pump, squash, threshold=1)
+    #for idx, item in enumerate(pumpkins_indexes[0]):
+    #    print item, pumpkins_indexes[1][idx]
+    print pumpkins_indexes
 
-    pumpkins_indexes = sneaky_squash(pump, squash)
-
-    out_image = highlight.highlight(frame2, pumpkins_indexes, color=(255,0,0))
+    out_image = highlight.highlight(img2, pumpkins_indexes, color=(255,0,0))
 
     cv2.imshow('', out_image)
     cv2.waitKey(0)
+    v.release()

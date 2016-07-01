@@ -22,25 +22,26 @@ class MainApplication(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
-        self.serializedClient = SerializableClient(args.json_file)
-
+        #self.serializedClient = SerializableClient(args.json_file)
+        print 1
         self.init_ui()
-
+        print 2
         self.start_streams()
+        print 3
         self.start_telemtry()
 
     def init_ui(self):
         self.streams = []
 
-        l = VideoStream(self, 0, 'Left', num=0)
+        l = VideoStream(self, 0, 'Left','/home/rithyperloop/PyDetect/src/client/assets/ideal_image0.jpg', num=0)
         l.grid(row=0, column=0)
         self.streams.append(l)
 
-        c = VideoStream(self, 'drop.avi', 'Center', frame_size=(640,480), num=1)
+        c = VideoStream(self, 1, 'Center', '/home/rithyperloop/PyDetect/src/client/assets/ideal_image1.jpg', frame_size=(640,480), num=1)
         c.grid(row=2, column=0, columnspan=2, rowspan=2)
         self.streams.append(c)
 
-        r = VideoStream(self, 'drop.avi', 'Right', num=2)
+        r = VideoStream(self, 'drop.avi', 'Right', '/home/rithyperloop/PyDetect/src/client/assets/frame4.jpg', num=2)
         r.grid(row=0, column=1)
         self.streams.append(r)
 
@@ -131,9 +132,9 @@ class MainApplication(tk.Frame):
 
 def main(args):
     root = tk.Tk()
+    root.wm_title('RIT Imaging Team')
     MainApplication(root, args)
-    root.update()
-    print root.winfo_height(), root.winfo_width()
+
     root.mainloop()
     sys.exit()
 

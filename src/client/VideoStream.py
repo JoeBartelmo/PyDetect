@@ -13,13 +13,14 @@ from VideoWidget import VideoWidget
 import stealth_pumpkin
 
 class VideoStream(tk.Frame):
-    def __init__(self, parent, source, name, frame_size=(320, 240), num=0):
+    def __init__(self, parent, source, name, im_file, frame_size=(320, 240), num=0):
         tk.Frame.__init__(self, parent, padx=3, pady=3, bd=2, relief='groove', takefocus=1)
         self.parent = parent
 
         self.num = num
         self.name = name
         self.frame_size = frame_size
+        self.source = source
 
         # keybind click to make it big        
         #self.focus_set()
@@ -29,7 +30,7 @@ class VideoStream(tk.Frame):
         
         # processes and queues
         self.raw_q_1 = Queue()
-        do_pump = lambda: stealth_pumpkin.script(self.raw_q_1, self.pumpkin.queue)
+        do_pump = lambda: stealth_pumpkin.script(self.raw_q_1, self.pumpkin.queue, im_file)
         self.pumpkin.proc = Process(target=do_pump)
         self.proc = Process(target=self.image_capture)
 
@@ -37,14 +38,15 @@ class VideoStream(tk.Frame):
         self.vidcap = cv2.VideoCapture(source)
         #self.vidcap.set(cv2.cv.CV_CAP_PROP_BUFFERSIZE, 3) # TODO check docs on this
 
-        self.fps = self.vidcap.get(cv2.cv.CV_CAP_PROP_FPS)
+        #self.fps = self.vidcap.get(cv2.cv.CV_CAP_PROP_FPS)
         self.fwidth = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
         self.fheight = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
-        fourcc = cv2.cv.CV_FOURCC('M','J','P','G')
-        self.vidout = cv2.VideoWriter('output.avi', fourcc, self.fps, (self.fheight,self.fwidth))
+        self.vidcap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 640)
+        self.vidcap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 480)
 
-        self.after_id = None
+        #fourcc = cv2.cv.CV_FOURCC('M','J','P','G')
+        #self.vidout = cv2.VideoWriter('output.avi', fourcc, self.fps, (self.fheight,self.fwidth))
 
     def init_ui(self):
         self.raw_vid = VideoWidget(self, self.frame_size)
@@ -81,31 +83,28 @@ class VideoStream(tk.Frame):
                 flag, frame = self.vidcap.read()
 
                 if not flag:
-                    return
+                    self.check_stream()
 
                 img = demosaic(frame)
                 img_col = color_correct(img)
 
-                self.raw_q_1.put(frame)
-                self.raw_vid.queue.put(frame)  # TODO save also
+                self.raw_q_1.put(img)
+                self.raw_vid.queue.put(img)  # TODO save also
                 #self.vidout.write(frame)
 
+    def check_stream(self):
+        self.vidcap.release()
+        self.vidcap = cv2.VideoCapture(self.source)
+        
+
     def play(self):
-        #print self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
+        print self.name, self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
 
         if self.raw_vid.queue.qsize() == 0:
             return
 
         self.raw_vid.update_image()
         self.pumpkin.update_image()
-
-        self.after_id = self.after(25, self.play)   # TODO make constant
-
-    def pause(self):
-        for i in range(50):
-            if self.after_id is not None:
-                self.after_cancel(self.after_id)
-                self.after_id = None
 
     def move(self, t):
         if mode == 0:  # relative to start
@@ -117,20 +116,20 @@ class VideoStream(tk.Frame):
             pass
 
     def quit_(self):
-        self.pause()
+        #self.pause()
 
         self.pumpkin.proc.terminate()
         self.proc.terminate()
         
         self.vidcap.release()
-        self.vidout.release()
+        #self.vidout.release()
 
         self.quit()
 
 def demosaic(input_im):
-    #img_data = numpy.asarray(input_im, dtype=numpy.uint8)
-    #rgb = cv2.cvtColor(img_data, cv2.COLOR_BAYER_GR2RGB)
-    return input_im
+    gray = cv2.cvtColor(input_im, cv2.COLOR_RGB2GRAY)
+    img = cv2.cvtColor(gray, cv2.COLOR_BAYER_GR2RGB)
+    return img
 
 def color_correct(input_im):
     # do nothing for now
