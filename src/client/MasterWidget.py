@@ -21,7 +21,7 @@ class MasterWidget(tk.Frame):
         self.play_button = tk.Button(self, text=u'\u25B6', command=self.play)
         self.move_forward = tk.Button(self, text='>>', command=lambda:self.move(10, 1))
         self.move_back = tk.Button(self, text='<<', command=lambda:self.move(-10, 1))
-        self.snap_current = tk.Button(self, text='|>', command=lambda:self.move(-1, 0))
+        self.snap_current = tk.Button(self, text='|>', command=lambda:self.move(0, 2))
         self.snap_start = tk.Button(self, text='<|', command=lambda:self.move(0, 0))
         tk.Button(self, text='X', command=self.quit_).grid(row=0,column=6, sticky='nw')
 

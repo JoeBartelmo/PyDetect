@@ -4,20 +4,13 @@
 import Tkinter as tk
 import sys
 from multiprocessing import Queue, Process
-from VideoWidget import VideoWidget
-import cv2
 import time
 
+import cv2
+import numpy
+
+from VideoWidget import VideoWidget
 import stealth_pumpkin
-
-def demosaic(input_im):
-    #orig_gray = cv2.cvt2Color(input_im, cv2.COLOR_RGB2GRAY)  # THIS STEP IS NECESARY, check w/ kristina
-    #demosaiced = cv2.cvt2Color(orig_gray, cv2.COLOR_BAYER_GR2RGB)
-    return input_im
-
-def color_correct(input_im):
-    #return cv2.cvtColor(input_im, cv2.COLOR_BGR2RGB)
-    return input_im
 
 class VideoStream(tk.Frame):
     def __init__(self, parent, source, name, frame_size=(320, 240), num=0):
@@ -25,19 +18,22 @@ class VideoStream(tk.Frame):
         self.parent = parent
 
         self.num = num
-        self.frame_size = frame_size
-        self.focus_set()
-        self.bind("<Button-1>", self.focus)
         self.name = name
+        self.frame_size = frame_size
+
+        # keybind click to make it big        
+        #self.focus_set()
+        #self.bind("<Button-1>", self.focus)
+        
         self.init_ui()
         
+        # processes and queues
         self.raw_q_1 = Queue()
-
         do_pump = lambda: stealth_pumpkin.script(self.raw_q_1, self.pumpkin.queue)
-
         self.pumpkin.proc = Process(target=do_pump)
         self.proc = Process(target=self.image_capture)
 
+        # video capture 
         self.vidcap = cv2.VideoCapture(source)
         #self.vidcap.set(cv2.cv.CV_CAP_PROP_BUFFERSIZE, 3) # TODO check docs on this
 
@@ -46,7 +42,7 @@ class VideoStream(tk.Frame):
         self.fheight = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
         fourcc = cv2.cv.CV_FOURCC('M','J','P','G')
-        self.vidout = cv2.VideoWriter('output.avi',fourcc, 45.0, (self.fheight,self.fwidth))
+        self.vidout = cv2.VideoWriter('output.avi', fourcc, self.fps, (self.fheight,self.fwidth))
 
         self.after_id = None
 
@@ -58,6 +54,8 @@ class VideoStream(tk.Frame):
         self.raw_vid.grid(row=0, column=0, sticky='nw', columnspan=2)
         
         self.show_pump = tk.IntVar()
+        self.show_pump.set(0)
+        self.show()
 
         tk.Checkbutton(self, text="Pumpkin", variable=self.show_pump, command=self.show).grid(row=1,column=1, sticky='se')
         tk.Label(self, text=self.name, justify='left').grid(row=1, column=0, sticky='sw')
@@ -110,19 +108,33 @@ class VideoStream(tk.Frame):
                 self.after_id = None
 
     def move(self, t):
-        if mode == 0:
-            self.vidcap.set(0,t*1000)
-        if mode == 1:
-            self.vidcap.set(0,t*1000)
+        if mode == 0:  # relative to start
+            self.vidcap.set(cv2.cv.CAP_PROP_POS_MSEC, t*1000)
+        if mode == 1:  # relative to current position
+            current_pos = self.vidcap.get(cv2.cv.CAP_PROP_POS_MSEC)
+            self.vidcap.set(cv2.cv.CAP_PROP_POS_MSEC, t*1000 + current_pos)
+        if mode == 2:  # relative to end
+            pass
 
     def quit_(self):
-        
-        self.proc.terminate()
+        self.pause()
+
         self.pumpkin.proc.terminate()
+        self.proc.terminate()
+        
         self.vidcap.release()
         self.vidout.release()
+
         self.quit()
-        sys.exit(0)
+
+def demosaic(input_im):
+    #img_data = numpy.asarray(input_im, dtype=numpy.uint8)
+    #rgb = cv2.cvtColor(img_data, cv2.COLOR_BAYER_GR2RGB)
+    return input_im
+
+def color_correct(input_im):
+    # do nothing for now
+    return input_im
 
 if __name__=='__main__':
     root = tk.Tk()

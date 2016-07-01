@@ -28,7 +28,7 @@ class VideoWidget(tk.Frame):
         frame_resized = cv2.resize(frame, self.frame_size)
         a = Image.fromarray(frame_resized)
         b = ImageTk.PhotoImage(image=a)
-        self.image_label.configure(image=b, width=frame_size[0],height=frame_size[1])
+        self.image_label.configure(image=b, width=self.frame_size[0],height=self.frame_size[1])
         self.image_label._image_cache = b  # avoid garbage collection
         self.update()
 

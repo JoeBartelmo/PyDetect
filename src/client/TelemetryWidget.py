@@ -67,7 +67,8 @@ class TelemetryWidget(tk.Frame):
         tk.Label(self, text='Time since start [s]:',padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18).grid(row=14,column=0, sticky='w')
         self.telemtry_labels['time'].grid(row=14, column=1, sticky='w')
 
-        
+    def start(self):
+        self.p.start()
         
     def update_(self, telemetry):
         for i in self.telemetry_keys:
@@ -93,7 +94,6 @@ if __name__=='__main__':
     t = TelemetryWidget(root)
     t.grid()
     root.update()
-    #root.resizable(width=False, height=False)
     print t.winfo_height(), t.winfo_width()
     root.mainloop()
     sys.exit()
