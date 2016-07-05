@@ -41,8 +41,8 @@ class VideoStream(tk.Frame):
         self.fwidth = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
         self.fheight = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
-        fourcc = cv2.cv.CV_FOURCC('M','J','P','G')
-        self.vidout = cv2.VideoWriter('output.avi', fourcc, self.fps, (self.fheight,self.fwidth))
+        fourcc = cv2.cv.CV_FOURCC('X','V','I','D')
+        self.vidout = cv2.VideoWriter('output.avi', fourcc, 30, frame_size)
 
         self.after_id = None
 
@@ -88,16 +88,15 @@ class VideoStream(tk.Frame):
 
                 self.raw_q_1.put(frame)
                 self.raw_vid.queue.put(frame)  # TODO save also
-                #self.vidout.write(frame)
+                self.vidout.write(frame)
 
     def play(self):
         #print self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
 
-        if self.raw_vid.queue.qsize() == 0:
-            return
+        if self.raw_vid.queue.qsize() != 0:
 
-        self.raw_vid.update_image()
-        self.pumpkin.update_image()
+            self.raw_vid.update_image()
+            self.pumpkin.update_image()
 
         self.after_id = self.after(25, self.play)   # TODO make constant
 

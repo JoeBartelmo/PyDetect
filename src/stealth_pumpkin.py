@@ -10,10 +10,9 @@ def stealth_pumpkin(img, img_keypoints, block_size=8):
     r = block_size / 2
 
     for kp in img_keypoints:
-        x = kp.pt[0]
-        y = kp.pt[1]
+        col, row = kp.pt
 
-        counts[x-r:x+r, y-r:y+r] += 1
+        counts[row-r:row+r, col-r:col+r] += 1
 
     return counts
     
@@ -49,23 +48,28 @@ def script(in_q, out_q1):
 if __name__=='__main__':
     v = cv2.VideoCapture(0)
 
-    f, frame = v.read()
+    f, ideal_image = v.read()
     fast = cv2.FastFeatureDetector()
-    ideal_image_kp = fast.detect(frame, None)
-    pump = stealth_pumpkin(frame, ideal_image_kp)
-    
-    for i in range(60):
-        f, frame = v.read()
 
-    raw_input('Press Enter')
-    f, frame2 = v.read()
-    frame_kp = fast.detect(frame2, None)
+    ideal_image_kp = fast.detect(ideal_image, None)
+    pump = stealth_pumpkin(ideal_image, ideal_image_kp)
 
-    squash = stealth_pumpkin(frame, frame_kp)
+    cv2.imshow('ideal', ideal_image)
+    cv2.waitKey(1)
 
-    pumpkins_indexes = sneaky_squash(pump, squash)
+    while True:
+        f, q_image = v.read()
 
-    out_image = highlight.highlight(frame2, pumpkins_indexes, color=(255,0,0))
+        if type(q_image) is not numpy.ndarray or q_image is None:
+            print 'wrong type'
+            continue
+ 
+        q_image_kp = fast.detect(q_image, None)
+        squash = stealth_pumpkin(q_image, q_image_kp)
 
-    cv2.imshow('', out_image)
-    cv2.waitKey(0)
+        pumpkins_indexes = sneaky_squash(pump, squash)
+
+        out_image = highlight.highlight(q_image, pumpkins_indexes, color=(255,0,0))
+        
+        cv2.imshow('live', out_image)
+        cv2.waitKey(1)

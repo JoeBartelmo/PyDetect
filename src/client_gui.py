@@ -128,12 +128,15 @@ class MainApplication(tk.Frame):
             self.streams[1].grid(row=0, column=1)
         
         self.update()
+    
+    def close_(self):
+        self.master_w.quit_()
+        self.quit()
 
 def main(args):
     root = tk.Tk()
-    MainApplication(root, args)
-    root.update()
-    print root.winfo_height(), root.winfo_width()
+    m = MainApplication(root, args)
+    root.protocol("WM_DELETE_WINDOW", m.close_())
     root.mainloop()
     sys.exit()
 
