@@ -41,8 +41,8 @@ class VideoStream(tk.Frame):
         self.fwidth = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
         self.fheight = int(self.vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
-        fourcc = cv2.cv.CV_FOURCC('X','V','I','D')
-        self.vidout = cv2.VideoWriter('output.avi', fourcc, 30, frame_size)
+        #fourcc = cv2.cv.CV_FOURCC('X','V','I','D')
+        #self.vidout = cv2.VideoWriter('output.avi', fourcc, 30, frame_size)
 
         self.after_id = None
 
@@ -75,28 +75,31 @@ class VideoStream(tk.Frame):
         self.proc.start()
         self.pumpkin.proc.start()
 
-    def image_capture(self): 
+    def image_capture(self):
         while True:
             while self.raw_vid.queue.qsize() < 100:
+               
                 flag, frame = self.vidcap.read()
+                print flag
 
                 if not flag:
-                    return
+                    break
 
                 img = demosaic(frame)
                 img_col = color_correct(img)
 
-                self.raw_q_1.put(frame)
-                self.raw_vid.queue.put(frame)  # TODO save also
-                self.vidout.write(frame)
+                self.raw_q_1.put(img_col)
+                self.raw_vid.queue.put(img_col)  # TODO save also
+                #self.vidout.write(frame)
 
     def play(self):
         #print self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
 
-        if self.raw_vid.queue.qsize() != 0:
+        if self.raw_vid.queue.qsize() == 0:
+            return
 
-            self.raw_vid.update_image()
-            self.pumpkin.update_image()
+        self.raw_vid.update_image()
+        self.pumpkin.update_image()
 
         self.after_id = self.after(25, self.play)   # TODO make constant
 
@@ -122,7 +125,7 @@ class VideoStream(tk.Frame):
         self.proc.terminate()
         
         self.vidcap.release()
-        self.vidout.release()
+        #self.vidout.release()
 
         self.quit()
 
@@ -132,8 +135,8 @@ def demosaic(input_im):
     return input_im
 
 def color_correct(input_im):
-    # do nothing for now
-    return input_im
+    new_im = cv2.cvtColor(input_im, cv2.COLOR_BGR2RGB)
+    return new_im
 
 if __name__=='__main__':
     root = tk.Tk()
