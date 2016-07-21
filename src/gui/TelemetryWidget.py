@@ -1,9 +1,10 @@
 import Tkinter as tk
-from multiprocessing import Process, Queue
+from multiprocessing import Process
+from Queue import Queue
 import sys
 
 class TelemetryWidget(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, client_queue_in):
         tk.Frame.__init__(self, parent, bd=2, relief='groove')
         self.parent = parent
 
@@ -21,7 +22,8 @@ class TelemetryWidget(tk.Frame):
 
         self.init_ui()
 
-        self.telem_queue = Queue()
+        self.telem_queue = client_queue_in
+        self.internal_queue = Queue()
         self.p = Process(target=self.get_data)
 
     def init_ui(self):
@@ -74,20 +76,24 @@ class TelemetryWidget(tk.Frame):
         for i in self.telemetry_keys:
             self.string_vars[i].set(telemetry[i])
         
-    def persistent_update(self, delay=500):
-        telem = self.telem_queue.get()
-        self.update_(telem)
-        self.update()
+    def persistent_update(self, delay=100):
+        item = self.internal_queue.get(timeout=10)
 
-        root.after(delay, self.persistent_update, delay)
+        if type(item) == str:
+            self.update_(item)
+            self.update()
+        elif item:   # warning or error
+            self.parent.command_w.log(item)   # TODO change to depickle
+
+        self.after(delay, persistent_update, delay)
 
     def get_data(self):
         while True:
             #get data from json or whereever
-            #telem = TODO()
-            if not telem: 
+            telem = self.telem_queue.get(timeout=10)
+            if not telem:
                 continue
-            self.telem_queue.put(telem)
+            self.internal_queue.put(telem)
 
 if __name__=='__main__':
     root = tk.Tk()

@@ -1,9 +1,11 @@
 import Tkinter as tk
 
 class ControlWidget(tk.Frame):
-    def __init__(self, parent, p=None):
+    def __init__(self, parent, client_queue_out):
         tk.Frame.__init__(self, parent, bd=2, relief='groove')
         self.parent = parent
+
+        self.cmd_queue = client_queue_out
 
         self.init_ui()
 
@@ -21,13 +23,14 @@ class ControlWidget(tk.Frame):
     def send_command(self, event=None):
         cmd = self.cmd.get()
         if cmd is not '':
+            self.cmd_queue.put(cmd)   # send command to client
+
             self.log.set(self.log.get() + '\nCMD SENT: '+ cmd)
             self.cmd.set('')
-            pass # FIXME ACTUALLY SEND CMD
-
+            
     def log(self, item):
         if type(item) is str:
-            self.log.set(self.log.get() + '\nLOG: '+ item)
+            self.log.set(self.log.get() + '\n SERVER: '+ item)
 
 if __name__=='__main__':
     root = tk.Tk()
