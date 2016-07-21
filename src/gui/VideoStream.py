@@ -1,16 +1,16 @@
 # Copyright MIT
 # Primary Author: Nathan Dileas
-
-import Tkinter as tk
-import sys
-from multiprocessing import Queue, Process
 import time
+from multiprocessing import Queue, Process   # change to from queue import Queue?
+import sys
 
 import cv2
 import numpy
+import Tkinter as tk
 
 from VideoWidget import VideoWidget
-import stealth_pumpkin
+import img_proc.stealth_pumpkin as stealth_pumpkin
+from img_proc.misc import demosaic, color_correct
 
 class VideoStream(tk.Frame):
     def __init__(self, parent, source, name, frame_size=(320, 240), num=0):
@@ -129,14 +129,6 @@ class VideoStream(tk.Frame):
 
         self.quit()
 
-def demosaic(input_im):
-    #img_data = numpy.asarray(input_im, dtype=numpy.uint8)
-    #rgb = cv2.cvtColor(img_data, cv2.COLOR_BAYER_GR2RGB)
-    return input_im
-
-def color_correct(input_im):
-    new_im = cv2.cvtColor(input_im, cv2.COLOR_BGR2RGB)
-    return new_im
 
 if __name__=='__main__':
     root = tk.Tk()

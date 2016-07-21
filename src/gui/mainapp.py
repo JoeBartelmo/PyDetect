@@ -1,7 +1,7 @@
-from client.TelemetryWidget import TelemetryWidget
-from client.MasterWidget import MasterWidget
-from client.ControlWidget import ControlWidget
-from client.VideoStream import VideoStream
+from gui.TelemetryWidget import TelemetryWidget
+from gui.MasterWidget import MasterWidget
+from gui.ControlWidget import ControlWidget
+from gui.VideoStream import VideoStream
 
 import Tkinter as tk
 
