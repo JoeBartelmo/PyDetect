@@ -1,10 +1,12 @@
-import client_gui
+from gui.mainapp import MainApplication
+#import sys
+#sys.path.insert(0, '/home/nathan/python/PyDetect/src/img_proc')
 
 def start_gui(client_queue_in, client_queue_out, server_ip):
     root = tk.Tk()
 
     # define mainapp instance
-    m = client_gui.MainApplication(root, server_ip, client_queue_in, client_queue_out)
+    m = MainApplication(root, server_ip, client_queue_in, client_queue_out)
     root.protocol("WM_DELETE_WINDOW", m.close_())
 
     # run forever

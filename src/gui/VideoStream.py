@@ -80,7 +80,7 @@ class VideoStream(tk.Frame):
             while self.raw_vid.queue.qsize() < 100:
                
                 flag, frame = self.vidcap.read()
-                print flag
+                #print flag
 
                 if not flag:
                     break

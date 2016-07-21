@@ -1,33 +1,34 @@
-from gui.TelemetryWidget import TelemetryWidget
-from gui.MasterWidget import MasterWidget
-from gui.ControlWidget import ControlWidget
-from gui.VideoStream import VideoStream
+from TelemetryWidget import TelemetryWidget
+from MasterWidget import MasterWidget
+from ControlWidget import ControlWidget
+from VideoStream import VideoStream
 
 import Tkinter as tk
 
 class MainApplication(tk.Frame):
-    def __init__(self, parent, json_file, **kwargs):
+    def __init__(self, parent, client_queue_in, client_queue_out, server_ip, **kwargs):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
-        self.serializedClient = SerializableClient(json_file)
-
-        self.init_ui()
+        self.init_ui(client_queue_in, client_queue_out, server_ip)
 
         self.start_streams()
         self.start_telemtry()
 
-    def init_ui(self):
+    def init_ui(self, client_queue_in, client_queue_out, server_ip):
         self.streams = []
 
+        l_src = 'rtsp://%s/8555' % (server_ip)
         l = VideoStream(self, 0, 'Left', num=0)
         l.grid(row=0, column=0)
         self.streams.append(l)
 
+        c_src = 'rtsp://%s/8554' % (server_ip)
         c = VideoStream(self, 'drop.avi', 'Center', frame_size=(640,480), num=1)
         c.grid(row=2, column=0, columnspan=2, rowspan=2)
         self.streams.append(c)
 
+        r_src = 'rtsp://%s/8556' % (server_ip)
         r = VideoStream(self, 'drop.avi', 'Right', num=2)
         r.grid(row=0, column=1)
         self.streams.append(r)
@@ -48,10 +49,10 @@ class MainApplication(tk.Frame):
         self.master_w = MasterWidget(self, self.streams)
         self.master_w.grid(row=1, column=1)
 
-        self.telemetry_w = TelemetryWidget(self)
+        self.telemetry_w = TelemetryWidget(self, client_queue_in)
         self.telemetry_w.grid(row=0, column=4, rowspan=3)
 
-        self.command_w = ControlWidget(self)
+        self.command_w = ControlWidget(self, client_queue_out)
         self.command_w.grid(row=3, column=4, rowspan=1)
 
         r, c = self.grid_size()
@@ -68,9 +69,8 @@ class MainApplication(tk.Frame):
             stream.start()   # start grabbing frames
 
     def start_telemtry(self):
-        #self.telemetry_w.start()
-        #self.telemtry_w.persistent_update()
-        pass
+        self.telemetry_w.start()
+        self.telemtry_w.persistent_update()
 
     def show_stream(self):
         for s in self.streams:
