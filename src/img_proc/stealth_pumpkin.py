@@ -23,7 +23,7 @@ def sneaky_squash(ideal_counts, frame_counts, threshold=5):
 
 def script(in_q, out_q1, ideal_image_file):
     # load ideal image
-    ideal_image = cv2.imread(ideal_image_file)
+    ideal_image = in_q.get()
 
     fast = cv2.FastFeatureDetector()
 

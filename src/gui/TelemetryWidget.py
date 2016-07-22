@@ -1,6 +1,6 @@
 import Tkinter as tk
 from multiprocessing import Process
-from Queue import Queue
+from Queue import Queue, Empty
 import sys
 
 class TelemetryWidget(tk.Frame):
@@ -76,27 +76,34 @@ class TelemetryWidget(tk.Frame):
             self.string_vars[i].set(telemetry[i])
         
     def persistent_update(self, delay=100):
-        item = self.internal_queue.get(timeout=10)
-
+        item = None
+        try:
+            item = self.internal_queue.get(False)
+        except Empty:
+            pass
+        
         if type(item) == str:
             self.update_(item)
             self.update()
         elif item:   # warning or error
-            self.parent.command_w.log(item)   # TODO change to depickle
+            self.parent.command_w.log(item)   # TODO change to depickle 
 
-        self.after(delay, persistent_update, delay)
+        self.after(delay, self.persistent_update, delay)
 
     def get_data(self):
         while True:
             #get data from json or whereever
             try:
-                telem = self.telem_queue.get(timeout=10)
+                telem = self.telem_queue.get(False)
             except Empty:
                 continue
 
             if not telem:
                 continue
             self.internal_queue.put(telem)
+
+    def quit_(self):
+        self.p.terminate()
 
 if __name__=='__main__':
     root = tk.Tk()
