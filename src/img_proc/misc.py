@@ -1,3 +1,4 @@
+import cv2
 
 def demosaic(input_im):
     #img_data = numpy.asarray(input_im, dtype=numpy.uint8)

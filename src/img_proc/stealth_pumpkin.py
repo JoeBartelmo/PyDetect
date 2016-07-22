@@ -18,8 +18,8 @@ def stealth_pumpkin(img, img_keypoints, block_size=8):
     
 def sneaky_squash(ideal_counts, frame_counts, threshold=5):
     delta = numpy.absolute(ideal_counts - frame_counts)
-    print delta.shape
-    return delta[delta>=threshold]
+    #print delta.shape
+    return delta>=threshold
 
 def script(in_q, out_q1, ideal_image_file):
     # load ideal image

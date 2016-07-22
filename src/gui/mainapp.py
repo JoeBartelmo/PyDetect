@@ -18,17 +18,18 @@ class MainApplication(tk.Frame):
     def init_ui(self, client_queue_in, client_queue_out, server_ip):
         self.streams = []
 
-        l = VideoStream(self, 0, 'Left', num=0)
+        l_src = 'rtsp://%s/8555' % (server_ip)
+        l = VideoStream(self, 0, 'Left', '/home/rithyperloop/PyDetect/src/assets/econ_raw.jpg', num=0)
         l.grid(row=0, column=0)
         self.streams.append(l)
 
         c_src = 'rtsp://%s/8554' % (server_ip)
-        c = VideoStream(self, 'drop.avi', 'Center', frame_size=(640,480), num=1)
+        c = VideoStream(self, 'drop.avi', 'Center', '/home/rithyperloop/PyDetect/src/assets/econ_raw.jpg', num=1, frame_size=(640,480))
         c.grid(row=2, column=0, columnspan=2, rowspan=2)
         self.streams.append(c)
 
         r_src = 'rtsp://%s/8556' % (server_ip)
-        r = VideoStream(self, 'drop.avi', 'Right', num=2)
+        r = VideoStream(self, 'drop.avi', 'Right', '/home/rithyperloop/PyDetect/src/assets/econ_raw.jpg', num=2)
         r.grid(row=0, column=1)
         self.streams.append(r)
 
@@ -69,7 +70,7 @@ class MainApplication(tk.Frame):
 
     def start_telemtry(self):
         self.telemetry_w.start()
-        self.telemtry_w.persistent_update()
+        self.after(5000, self.telemetry_w.persistent_update)
 
     def show_stream(self):
         for s in self.streams:

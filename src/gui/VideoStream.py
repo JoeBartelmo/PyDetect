@@ -100,7 +100,7 @@ class VideoStream(tk.Frame):
         
 
     def play(self):
-        print self.name, self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
+        #print self.name, self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
 
         if self.raw_vid.queue.qsize() == 0:
             return

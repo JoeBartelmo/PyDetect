@@ -21,7 +21,6 @@ class TelemetryWidget(tk.Frame):
             self.telemtry_labels[i] = tk.Label(self, textvariable=self.string_vars[i],padx=5, pady=5, width=18,anchor='w')
 
         self.init_ui()
-
         self.telem_queue = client_queue_in
         self.internal_queue = Queue()
         self.p = Process(target=self.get_data)
@@ -90,7 +89,11 @@ class TelemetryWidget(tk.Frame):
     def get_data(self):
         while True:
             #get data from json or whereever
-            telem = self.telem_queue.get(timeout=10)
+            try:
+                telem = self.telem_queue.get(timeout=10)
+            except Empty:
+                continue
+
             if not telem:
                 continue
             self.internal_queue.put(telem)
