@@ -1,0 +1,16 @@
+Valmar must start at the same time as the Mars controller. Either via the server or the controller itself
+
+
+VALMAR functionality
+	generation of telemetry
+	generation of an beam-gap output in an ASCII file format, preferably a .csv
+	logging to console
+	check file for commands from the operator/controller. I created a JSON object for this purpose
+	archival of all pertinent imagery and console logs
+
+
+File structure for interfacing with the Mars controller:
+	"Valmar-command.json" -- commands and modifies parameters (enable/disable, exposure, psnr_threshold, etc)
+	"Valmar-telemetry.csv" -- telemetry for Goddard to parse and save
+	"Valmar-beam.gap" -- whatever beam gap output valmar creates. This will be read by Goddard and sent back to the operator.
+

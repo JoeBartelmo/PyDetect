@@ -1,0 +1,16 @@
+{
+  "name": "joes-commandline-util",
+  "version": "1.0.0",
+  "description": "Utility for launching a stream dynamically for all connected video cameras",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "Joseph Bartelmo",
+  "license": "MIT",
+  "dependencies": {
+    "cli": "~0.11.2",
+    "q": "^1.4.1",
+    "underscore": "^1.8.3"
+  }
+}

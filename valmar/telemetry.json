@@ -1,0 +1,16 @@
+{ 
+  "ibeam_counter": 0,
+  "frame_number": 0,
+  "framerate": 0.0,
+  "exposure": 0,
+  "gain": 0.0,
+  "gamma_y": 0.0,
+  "sharpness_modifer": 0.0,
+  "frames_to_process": 0,
+  "avg_processing_time": 0.0,
+  "psnr_threshold": 0.0,
+  "pixel_displacement_ratio": 0.0,
+  "valmar_enabled": false,
+  "beam_gap": {} 
+}
+

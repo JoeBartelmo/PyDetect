@@ -1,0 +1,19 @@
+|~~~~~~~~~~~~~~~~~~~~~~~~~~~~|                          |~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+|       SYSTEM COMMANDS      |                          |       MOTOR COMMANDS       |
+|~~~~~~~~~~~~~~~~~~~~~~~~~~~~|                          |~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+
+sys-shutdown : FULL SHUTDOWN                            M0010       : FULL STOP
+sys-restart  : FULL RESTART                             M1108       : FULL SPEED AHEAD
+a-shutdown   : ARDUINO SHUTDOWN                         M1008       : FULL SPEED BACKWARDS
+a-restart    : ARDUINO RESTART
+recall       : RECALL MARS UNIT
+stream       : RESTORE STREAM DEFAULTS
+brake        : BRAKE MARS UNIT
+
+
+
+
+|~~~~~~~~~~~~~~~~~~~~~~~~~~~~|                          |~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+|       LED   COMMANDS       |                          |       STREAM COMMANDS      |
+|~~~~~~~~~~~~~~~~~~~~~~~~~~~~|                          |~~~~~~~~~~~~~~~~~~~~~~~~~~~~|
+

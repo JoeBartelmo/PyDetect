@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+'.idea'
+.xml
+.iml
 # C extensions
 *.so
 
@@ -61,8 +64,13 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+<<<<<<< HEAD
 #Stupid PyCharm
 .idea/
 
 # gedit temp files
 *~
+
+#Webstorm
+.idea/
+'.idea' 

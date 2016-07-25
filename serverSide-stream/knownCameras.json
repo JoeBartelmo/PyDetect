@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Front Facing Camera",
+    "id": "1B194100",
+    "port_increment" : 0
+  },
+  {
+    "name": "Left Facing Camera",
+    "id": "26239400",
+    "port_increment" : 1
+  },
+  {
+    "name": "Right Facing Camera",
+    "id": "12078F00",
+    "port_increment" : 2
+  }
+]

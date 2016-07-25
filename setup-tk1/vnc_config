@@ -1,0 +1,9 @@
+[VNCServer]
+enabled=true
+port=6000
+width=1280
+height=720
+depth=24
+[SeatDefaults]
+xserver-allow-tcp=true
+

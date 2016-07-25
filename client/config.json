@@ -1,0 +1,53 @@
+{
+  "user_input" : {
+    "logName": "<insert pod team name here>",
+    "current_battery": 192.0
+    
+  },
+
+  "logging": {
+    "index_path":"/home/ubuntu/PyDetect/serverSide-stream/index.js",
+    "output_path":"/home/ubuntu/PyDetect/mars-controller"
+
+  },
+  "conversions": {
+    "code_to_rpm" : 111.1,
+    "rpm_to_speed" : 0.0020228
+
+  },
+  "valmar":{
+    "command_path":"/home/ubuntu/PyDetect/valmar/command.json",
+    "telemetry_path":"/home/ubuntu/PyDetect/valmar/telemetry.json",
+    "beam_gap_path":"/home/ubuntu/PyDetect/valmar/beam.gap"
+
+  },
+  "watchdog": {
+    "enableWatchdog":true,
+    "recallCode":"M1005",
+    "displayLogTimeout":10.0,
+    "brakingDistance":3.8,
+
+    "underVoltageAlert": 12.0,
+    "underVoltageWarning": 11.0,
+    "underVoltageCritical": 10.5,
+
+    "overVoltageAlert": 36,
+    "overVoltageWarning": 40,
+    "overVoltageCritical": 45,
+    
+    "overCurrentAlert":12.0,
+    "overCurrentWarning":15.0,
+    "overCurrentCritical":18.0,
+
+    "battPercentAlert":20,
+    "battPercentWarning":15,
+    "battPercentCritical":10
+
+    },
+  "constants": {
+    "baud_rate": 9600,
+    "timeout": 10,
+    "total_battery": 192.0,
+    "trackLength": 1500.0
+  }
+}

@@ -1,0 +1,10 @@
+this is a Node script that will handle the camera streams, tread lightly
+
+Installation
+
+sudo ./install.sh -- this will install node
+npm i -- this will install all required packages for the script
+
+node index.js (options) - will launch
+
+node index.js --close - will close all lingering streams
