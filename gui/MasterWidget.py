@@ -34,7 +34,8 @@ class MasterWidget(tk.Frame):
         
     def play(self):
         for s in self.streams:
-            s.play()
+            if s.isOpened()
+                s.play()
 
         self.after_id = self.after(30, self.play)
 

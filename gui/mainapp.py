@@ -66,7 +66,8 @@ class MainApplication(tk.Frame):
 
     def start_streams(self):
         for stream in self.streams:
-            stream.start()   # start grabbing frames
+            if stream.vidcap.isOpened():
+                stream.start()   # start grabbing frames
 
     def start_telemtry(self):
         self.telemetry_w.start()

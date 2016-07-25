@@ -78,21 +78,21 @@ class VideoStream(tk.Frame):
         self.pumpkin.proc.start()
 
     def image_capture(self):
-        while True:
-            while self.raw_vid.queue.qsize() < 100:
-               
-                flag, frame = self.vidcap.read()
-                #print flag
+        #while True:
+        while self.raw_vid.queue.qsize() < 100:
+           
+            flag, frame = self.vidcap.read()
+            #print flag
 
-                if not flag:
-                    break
+            if not flag:
+                break
 
-                img = demosaic(frame)
-                img_col = color_correct(img)
+            img = demosaic(frame)
+            img_col = color_correct(img)
 
-                self.raw_q_1.put(img)
-                self.raw_vid.queue.put(img)  # TODO save also
-                #self.vidout.write(frame)
+            self.raw_q_1.put(img)
+            self.raw_vid.queue.put(img)  # TODO save also
+            #self.vidout.write(frame)
 
     def check_stream(self):
         self.vidcap.release()
@@ -119,9 +119,9 @@ class VideoStream(tk.Frame):
 
     def quit_(self):
         #self.pause()
-
-        self.pumpkin.proc.terminate()
-        self.proc.terminate()
+        if self.vidcap.isOpened():
+            self.pumpkin.proc.terminate()
+            self.proc.terminate()
         
         self.vidcap.release()
         #self.vidout.release()

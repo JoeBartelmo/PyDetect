@@ -23,7 +23,9 @@ class VideoWidget(tk.Frame):
         self.image_label.grid(row=0, column=0)
 
     def update_image(self):
-        frame = self.queue.get()
+        frame = self.queue.get(False)   # non blocking call
+        if frame == None:
+            return
 
         frame_resized = cv2.resize(frame, self.frame_size)
         a = Image.fromarray(frame_resized)
