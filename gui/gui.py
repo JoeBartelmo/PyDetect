@@ -20,8 +20,8 @@ def start(client_queue_in, client_queue_out, server_ip):
     # title and icon
     root.wm_title('Hyperloop Imaging Team')
     # TODO change to relative path
-    img = tk.PhotoImage(file='/home/hyperloop/PyDetect/gui/assets/rit_imaging_team.png')
-    root.tk.call('wm', 'iconphoto', root._w, img)
+    #img = tk.PhotoImage()
+    #root.tk.call('wm', 'iconphoto', root._w, img)
 
     # run forever
     Process(target=root.mainloop).start()
@@ -31,6 +31,6 @@ if __name__=='__main__':
 
     in_queue = Queue()
     out_queue = Queue()
-    server_ip = '192.0.0.1'
+    server_ip = '127.0.0.1'
 
     start(in_queue, out_queue, server_ip)
