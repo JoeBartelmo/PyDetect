@@ -18,7 +18,7 @@ killCommand = 'exit'
 
 #socket that receives data from server
 telemetry = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-telemetry.bind(('localhost', logPort))
+telemetry.bind((server_addr, logPort))
 telemetry.listen(1)
 
 #socket that will send data to the server
