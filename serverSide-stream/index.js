@@ -33,9 +33,11 @@ function generateVLCStreamCommands(options, cameras) {
       if(cameraInfo && cameraInfo.name) {
         cli.info(cameraInfo.name + ' recognized with serial ' + cameraInfo.id + '.\n\tOpened on Port: ' + (parseInt(options.port) + cameraInfo.port_increment));
         var cmd = "cvlc "+ (options.verbose ? '-vvv' : '');
-            cmd += "v4l2://"+camera+":width="+options.width+":height="+options.height+":fps="+options.fps + '--live-caching 200 ';
-            cmd += "--sout '#transcode{vcodec=h264,venc=x264{preset=ultrafast}vb="+options.bitrate + ",acodec=none}:duplicate{dst=file{dst=/phobos/stream_archive/" + options.filename+cameraInfo.port_increment +".mp4},dst=rtp{sdp=rtsp://:";
+            cmd += "v4l2://"+camera+":width="+options.width+":height="+options.height+":fps="+options.fps + ' --live-caching 200 ';
+            cmd += "--sout '#transcode{vcodec=h264,venc=x264{preset=ultrafast}vb="+options.bitrate;
+            cmd += ",acodec=none}:duplicate{dst=file{dst=" + options.filename + '-' + cameraInfo.name.replace(/ /g, '') + ".mp4},dst=rtp{sdp=rtsp://:";
             cmd += (parseInt(options.port)+cameraInfo.port_increment)+"/}}'";
+        cli.info(cmd)
         defer.resolve(cmd);
       }
       else {
@@ -50,7 +52,7 @@ function generateVLCStreamCommands(options, cameras) {
 
 function killPID(pid) {
   if(pid.length > 0) {
-    var command = 'kill -9 ' + pid;
+    var command = 'kill ' + pid;
     exec(command, function callback(err, result) {
         var result = (err || result || 'success').toString();
         if(result.indexOf('No such process') > -1) {

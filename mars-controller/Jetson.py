@@ -3,7 +3,6 @@ ark9719
 6/17/2016
 '''
 
-from CodeInput import ConcreteLEDInput, ConcreteStreamInput, ConcreteMotorInput, ConcreteSystemInput
 from GpioPin import GpioPin
 from Watchdog import Watchdog
 from Threads import InputThread, StatisticsThread
@@ -24,12 +23,12 @@ class Jetson(object):
     """
 
     def __init__(self, devices, config, timestamp, q = None):
-
         self._devices = devices
-        self.initDevices()
-        self.initThreads()
 
         self._pinHash = self.initPins()
+        self._devices['Watchdog'] = Watchdog(config, self._devices['Arduino'], self._devices['Mars'], self._pinHash)
+        self.initDevices()
+        self.initThreads()
         self.initCommands()
 
         self._timestamp = timestamp
@@ -46,7 +45,7 @@ class Jetson(object):
         self._motor._arduino = self._arduino
         self._led = self._devices['LED']
         self._led._arduino = self._arduino
-        self._watchdog = self._devices['WatchDog']
+        self._watchdog = self._devices['Watchdog']
         self._valmar = self._devices['Valmar']
 
     def initPins(self):
@@ -106,7 +105,7 @@ class Jetson(object):
         :param controlCode:
         :return: Return specialized command object
         """
-        print("Control code: " + controlCode)
+        logging.info("Control code: " + controlCode)
 
         if controlCode in self._motor._motorCodes:
             return self._motor.issue(controlCode, self._arduino)
@@ -161,17 +160,16 @@ class Jetson(object):
         :param data:
         :return:
         """
+        self._filename = self._config.logging.output_path + '/output/' + self._config.user_input.log_name + '-' + self._timestamp + '/' + self._config.user_input.log_name + '_machine_log.csv'
         #If the header to the file isn't written, write it.
-        if (not self._header ):
-            fileName = self._config.logging.output_path + '/output/' + self._config.logging.log_name + '-' + self._timestamp + '/' + self._config.logging.log_name + '_machine_log.csv'
-            with open(fileName, 'a') as rawFile:
-                rawWriter = csv.DictWriter(rawFile, data.keys())
-                rawWriter.writeheader()
-            self._header = True
-
         try:
-            fileName = self._config.logging.output_path + '/output/' + self._config.logging.log_name + '-' + self._timestamp + '/' + self._config.logging.log_name + '_machine_log.csv'
-            with open(fileName, 'a') as rawFile:
+            with open(self._filename, 'a') as rawFile:
+                #If the header to the file isn't written, write it.
+                if (not self._header):
+                    rawWriter = csv.DictWriter(rawFile, data.keys())
+                    rawWriter.writeheader()
+                    self._header = True
+
                 rawWriter = csv.DictWriter(rawFile, data.keys())
                 rawWriter.writerow(data)
 
@@ -285,16 +283,10 @@ class Jetson(object):
         logging.info("Laser relay ended")
         self._stream.close()
 
-    def turnOnComponent(self,indentifier):
-        self._pinHash[indentifier].changeState(0) #inverted Logic: 0 --> On
-
-    def turnOffComponent(self,indentifier):
-        self._pinHash[indentifier].changeState(1) #inverted Logic: 1 --> Off
-
     def resetArduino(self):
-        self.turnOffComponent("resetArduino")
+        self._pinHash["resetArduino"].toggleOff()
         time.sleep(.2)
-        self.turnOnComponent("resetArduino")
+        self._pinHash["resetArduino"].toggleOn()
 
     def graph(self, graphCommand):
         #This is kinda hacky, but we want to keep mars independant of the server

@@ -30,7 +30,7 @@ class Mars(object):
         statistics.setdefault('IntervalDistance', 0)
         statistics.setdefault('IntervalDisplacement', 0)
         statistics.setdefault('TotalDisplacement', 0)
-        statistics.setdefault('BatteryRemaining', self._config.battery.current_battery)
+        statistics.setdefault('BatteryRemaining', self._config.user_input.current_battery)
 
     def generateStatistics(self):
         """
@@ -51,11 +51,11 @@ class Mars(object):
         currenttime = time.time()
         self._integTime = currenttime - copy
 
-        print("Integ time:" + str(self._integTime))
+        logging.info("Integ time:" + str(self._integTime))
         self._statistics['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
 
 
-        print(rawArray)
+        logging.info(rawArray)
         rpm = rawArray[0]
         self._statistics['RPM'] = float(rpm)
         sysV = rawArray[1]

@@ -59,7 +59,7 @@ class System(object):
         myMars = Mars(myArduino, config, myLED, myMotor)
         time.sleep(.5)
 
-        myWatchDog = Watchdog(config, myArduino, myMars)
+
         myValmar = Valmar(config, myMars)
 
         devices = {
@@ -68,14 +68,5 @@ class System(object):
                     'Mars': myMars,
                     'Arduino': myArduino,
                     'Valmar': myValmar,
-                    'WatchDog': myWatchDog
         }
         return devices
-
-
-
-
-
-
-
-

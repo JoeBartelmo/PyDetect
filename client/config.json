@@ -1,14 +1,11 @@
 {
   "user_input" : {
-    "logName": "<insert pod team name here>",
+    "log_name": "<insert pod team name here>",
     "current_battery": 192.0
-    
   },
-
   "logging": {
     "index_path":"/home/ubuntu/PyDetect/serverSide-stream/index.js",
     "output_path":"/home/ubuntu/PyDetect/mars-controller"
-
   },
   "conversions": {
     "code_to_rpm" : 111.1,
@@ -19,35 +16,33 @@
     "command_path":"/home/ubuntu/PyDetect/valmar/command.json",
     "telemetry_path":"/home/ubuntu/PyDetect/valmar/telemetry.json",
     "beam_gap_path":"/home/ubuntu/PyDetect/valmar/beam.gap"
-
   },
   "watchdog": {
-    "enableWatchdog":true,
-    "recallCode":"M1005",
-    "displayLogTimeout":10.0,
-    "brakingDistance":3.8,
+    "enable_watchdog":true,
+    "recall_code":"M1005",
+    "display_log_timeout":10.0,
+    "braking_distance":3.8,
 
-    "underVoltageAlert": 12.0,
-    "underVoltageWarning": 11.0,
-    "underVoltageCritical": 10.5,
+    "under_voltage_alert": 12.0,
+    "under_voltage_warning": 11.0,
+    "under_voltage_critical": 10.5,
 
-    "overVoltageAlert": 36,
-    "overVoltageWarning": 40,
-    "overVoltageCritical": 45,
-    
-    "overCurrentAlert":12.0,
-    "overCurrentWarning":15.0,
-    "overCurrentCritical":18.0,
+    "over_voltage_alert": 36,
+    "over_voltage_warning": 40,
+    "over_voltage_critical": 45,
 
-    "battPercentAlert":20,
-    "battPercentWarning":15,
-    "battPercentCritical":10
+    "over_current_alert":12.0,
+    "over_current_warning":15.0,
+    "over_current_critical":18.0,
 
-    },
+    "batt_percent_alert":20,
+    "batt_percent_warning":15,
+    "batt_percent_critical":10
+  },
   "constants": {
     "baud_rate": 9600,
     "timeout": 10,
     "total_battery": 192.0,
-    "trackLength": 1500.0
+    "track_length": 1500.0
   }
 }

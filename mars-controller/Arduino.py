@@ -16,24 +16,23 @@ class Arduino(object):
         self._init = False #False until initialized
         self._arduinoPath = glob.glob('/dev/ttyACM*')[0]
 
-        print self._arduinoPath
+        logging.info(self._arduinoPath)
         self._timeInit = time.time()
         self._lastLED = 'None yet'
         self._lastMotor = 'None yet'
 
 
         try:
-            print("Attempting to connect Arduino")
+            logging.info("Attempting to connect Arduino")
             self._controller = serial.Serial(self._arduinoPath, self._config.constants.baud_rate)
             self._init = True
             logging.info('Arduino connected')
-            print("Arduino connected.")
             time.sleep(.1)
         except serial.serialutil.SerialException:
             logging.info("Arduino didn't connect.")
-            print("arduino not connected or device path wrong")
-            print("check MARS user manual for details")
-            print("unable to continue, program will now terminate")
+            logging.info("arduino not connected or device path wrong")
+            logging.info("check MARS user manual for details")
+            logging.info("unable to continue, program will now terminate")
             sys.exit()
 
     def serial_readline(self):
@@ -41,8 +40,8 @@ class Arduino(object):
         This method manages pulling the raw data off the arduino.
         :return:
         """
-        if (self._init == False):
-            print("Arduino has not been initialized!")
+
+        assert self._init, "Arduino has not been initialized"
 
         waitStart = time.time()
         waitTime = time.time() - waitStart
@@ -73,23 +72,21 @@ class Arduino(object):
         Function to flush arduinos serial buffers
         :return:
         """
-        if(self._init):
-            self._controller.flushInput()
-            self._controller.flushOutput()
-        else:
-            print("Arduino has not been initialized!")
+        assert self._init, "Arduino has not been initialized"
+
+        self._controller.flushInput()
+        self._controller.flushOutput()
+
 
     def flushInput(self):
-        if(self._init):
-            self._controller.flushInput()
-        else:
-            print("Arduino has not been initialized!")
+
+        assert self._init, "Arduino has not been initialized"
+        self._controller.flushInput()
+
 
     def flushOutput(self):
-        if(self._init):
-            self._controller.flushOutput()
-        else:
-            print("Arduino has not been initialized!")
+        assert self._init, "Arduino has not been initialized"
+        self._controller.flushOutput()
 
     def write(self, controlCode):
         """
@@ -97,10 +94,10 @@ class Arduino(object):
         :param controlCode:
         :return:
         """
-        if (self._init):
-            self._controller.write(controlCode) #send control code over
-        else:
-            print("Arduino has not been initialized!")
+
+        assert self._init, "Arduino has not been initialized"
+        self._controller.write(controlCode) #send control code over
+
 
 
     def inWaiting(self):

@@ -11,7 +11,7 @@ class Stream (object):
         self._timestamp = timestamp
         self._init = False
         self._indexPath = self._config.logging.index_path
-        self._logPath = self._config.logging.output_path + '/output/' + self._timestamp +'/' + self._config.logging.log_name
+        self._logPath = self._config.logging.output_path + 'output/' + self._config.user_input.log_name + '-' + self._timestamp + '/video'
 
 
     def refresh(self):
