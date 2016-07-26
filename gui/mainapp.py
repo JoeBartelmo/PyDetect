@@ -19,17 +19,17 @@ class MainApplication(tk.Frame):
         self.streams = []
 
         l_src = 'rtsp://%s/8555' % (server_ip)
-        l = VideoStream(self, 0, 'Left', '/home/rithyperloop/PyDetect/src/assets/econ_raw.jpg', num=0)
+        l = VideoStream(self, 0, 'Left', num=0)
         l.grid(row=0, column=0)
         self.streams.append(l)
 
         c_src = 'rtsp://%s/8554' % (server_ip)
-        c = VideoStream(self, 1, 'Center', '/home/rithyperloop/PyDetect/src/assets/econ_raw.jpg', num=1, frame_size=(640,480))
+        c = VideoStream(self, 1, 'Center', num=1, frame_size=(640,480))
         c.grid(row=2, column=0, columnspan=2, rowspan=2)
         self.streams.append(c)
 
         r_src = 'rtsp://%s/8556' % (server_ip)
-        r = VideoStream(self, 2, 'Right', '/home/rithyperloop/PyDetect/src/assets/econ_raw.jpg', num=2)
+        r = VideoStream(self, 2, 'Right', num=2)
         r.grid(row=0, column=1)
         self.streams.append(r)
 

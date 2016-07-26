@@ -18,7 +18,7 @@ class VideoWidget(tk.Frame):
         self.proc = p
         self.frame_size = frame_size
 
-        self.initial_im = tk.PhotoImage(file='assets/blank_256x240.png')
+        self.initial_im = tk.PhotoImage(file='/home/hyperloop/PyDetect/gui/assets/blank_256x240.png')
         self.image_label = tk.Label(self, image=self.initial_im, width=frame_size[0],height=frame_size[1])
         self.image_label.grid(row=0, column=0)
 

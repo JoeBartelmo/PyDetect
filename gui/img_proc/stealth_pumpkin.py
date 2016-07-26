@@ -21,7 +21,7 @@ def sneaky_squash(ideal_counts, frame_counts, threshold=5):
     #print delta.shape
     return delta>=threshold
 
-def script(in_q, out_q1, ideal_image_file):
+def script(in_q, out_q1):
     # load ideal image
     ideal_image = in_q.get()
 

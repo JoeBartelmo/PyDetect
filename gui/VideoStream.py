@@ -13,7 +13,7 @@ import img_proc.stealth_pumpkin as stealth_pumpkin
 from img_proc.misc import demosaic, color_correct
 
 class VideoStream(tk.Frame):
-    def __init__(self, parent, source, name, im_file, frame_size=(320, 240), num=0):
+    def __init__(self, parent, source, name, frame_size=(320, 240), num=0):
         tk.Frame.__init__(self, parent, padx=3, pady=3, bd=2, relief='groove', takefocus=1)
         self.parent = parent
 
@@ -30,7 +30,7 @@ class VideoStream(tk.Frame):
         
         # processes and queues
         self.raw_q_1 = Queue()
-        do_pump = lambda: stealth_pumpkin.script(self.raw_q_1, self.pumpkin.queue, im_file)
+        do_pump = lambda: stealth_pumpkin.script(self.raw_q_1, self.pumpkin.queue)
         self.pumpkin.proc = Process(target=do_pump)
         self.proc = Process(target=self.image_capture)
 

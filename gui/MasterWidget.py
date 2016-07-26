@@ -34,7 +34,7 @@ class MasterWidget(tk.Frame):
         
     def play(self):
         for s in self.streams:
-            if s.isOpened()
+            if s.vidcap.isOpened():
                 s.play()
 
         self.after_id = self.after(30, self.play)
