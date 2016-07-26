@@ -1,5 +1,6 @@
 from mainapp import MainApplication
 import Tkinter as tk
+from multiprocessing import Process
 
 def start(client_queue_in, client_queue_out, server_ip):
     root = tk.Tk()
@@ -14,7 +15,7 @@ def start(client_queue_in, client_queue_out, server_ip):
     root.tk.call('wm', 'iconphoto', root._w, img)
 
     # run forever
-    root.mainloop()
+    Process(target=root.mainloop).start()
 
 if __name__=='__main__':
     from Queue import Queue

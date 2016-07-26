@@ -4,8 +4,11 @@ import time
 from listener import ListenerThread
 from Queue import Queue
 
+from ..gui import gui
+
 marsPort = 1337
 logPort = 1338
+server_addr = 'localhost'
 
 killCommand = 'exit'
 
@@ -19,7 +22,7 @@ telemetry.bind(('localhost', logPort))
 telemetry.listen(1)
 
 #socket that will send data to the server
-sock = socket.create_connection(('localhost', marsPort))
+sock = socket.create_connection((server_addr, marsPort))
 
 #accepts receiving socket
 telemetryConnection, server_address = telemetry.accept()
@@ -37,6 +40,10 @@ try:
     #launch thread that continuouly receieves data from server
     thread = ListenerThread(None, telemetryConnection)
     thread.start()
+
+    # start gui
+    gui.start(guiInput, guiOutput, server_addr)
+
     while True:
         command = raw_input()
         sock.sendall(command)
