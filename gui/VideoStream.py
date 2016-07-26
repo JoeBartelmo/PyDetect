@@ -13,6 +13,16 @@ import img_proc.stealth_pumpkin as stealth_pumpkin
 from img_proc.misc import demosaic, color_correct
 
 class VideoStream(tk.Frame):
+    """
+    Deals with video streams from valmar.
+
+    Args:
+        parent: parent window
+        source: source for cv2 VideoCapture object
+        name: for label in GUI
+        frame_size: size to be displayed at, for focus in GUI
+        num: for setting focus in parent widget
+    """
     def __init__(self, parent, source, name, frame_size=(320, 240), num=0):
         tk.Frame.__init__(self, parent, padx=3, pady=3, bd=2, relief='groove', takefocus=1)
         self.parent = parent
@@ -21,10 +31,6 @@ class VideoStream(tk.Frame):
         self.name = name
         self.frame_size = frame_size
         self.source = source
-
-        # keybind click to make it big        
-        #self.focus_set()
-        #self.bind("<Button-1>", self.focus)
         
         self.init_ui()
         
@@ -45,10 +51,11 @@ class VideoStream(tk.Frame):
         self.vidcap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 640)
         self.vidcap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 480)
 
-        #fourcc = cv2.cv.CV_FOURCC('M','J','P','G')
+        #fourcc = cv2.cv.CV_FOURCC('M','J','P','G')   # TODO fix writing out
         #self.vidout = cv2.VideoWriter('output.avi', fourcc, self.fps, (self.fheight,self.fwidth))
 
     def init_ui(self):
+        """ Initialize visual elements of widget. """
         self.raw_vid = VideoWidget(self, self.frame_size)
         self.pumpkin = VideoWidget(self, self.frame_size)
 
@@ -62,22 +69,20 @@ class VideoStream(tk.Frame):
         tk.Checkbutton(self, text="Pumpkin", variable=self.show_pump, command=self.show).grid(row=1,column=1, sticky='se')
         tk.Label(self, text=self.name, justify='left').grid(row=1, column=0, sticky='sw')
 
-    def focus(self, event):
-        self.focus_set()
-        self.parent.stream_active.set(self.num)
-        self.parent.show_stream()
-
     def show(self):
+        """ Whether or not to show pumpkin processing. """
         if self.show_pump.get() == 0:
             self.raw_vid.tkraise()
         elif self.show_pump.get() == 1:
             self.pumpkin.tkraise()
         
     def start(self):
+        """ Start capture and processing. """
         self.proc.start()
         self.pumpkin.proc.start()
 
     def image_capture(self):
+        """ Capture images from source provided. """
         #while True:
         while self.raw_vid.queue.qsize() < 100:
            
@@ -95,11 +100,13 @@ class VideoStream(tk.Frame):
             #self.vidout.write(frame)
 
     def check_stream(self):
+        # TODO fix for threadsafe checking of videocap status and time
         self.vidcap.release()
         self.vidcap = cv2.VideoCapture(self.source)
         
 
     def play(self):
+        """ Play video from source. """
         #print self.name, self.raw_vid.queue.qsize(), self.pumpkin.queue.qsize()
 
         if self.raw_vid.queue.qsize() == 0:
@@ -109,6 +116,7 @@ class VideoStream(tk.Frame):
         self.pumpkin.update_image()
 
     def move(self, t):
+        """ Move videocapture oject to specified time. """
         if mode == 0:  # relative to start
             self.vidcap.set(cv2.cv.CAP_PROP_POS_MSEC, t*1000)
         if mode == 1:  # relative to current position
@@ -118,7 +126,8 @@ class VideoStream(tk.Frame):
             pass
 
     def quit_(self):
-        #self.pause()
+        """ Customized quit function to allow for safe closure of processes. """
+
         if self.vidcap.isOpened():
             self.pumpkin.proc.terminate()
             self.proc.terminate()

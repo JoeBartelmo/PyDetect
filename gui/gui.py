@@ -3,7 +3,15 @@ import Tkinter as tk
 from multiprocessing import Process
 
 def start(client_queue_in, client_queue_out, server_ip):
-    root = tk.Tk()
+    """
+    Start graphical interface for client.
+
+    Args:
+        client_queue_in: queue to get telemetry and logging info
+        client_queue_out: queue to communicate commands
+        server_ip: server IP address for rtsp stream access
+    """
+    root = tk.Tk()   # get root window
 
     # define mainapp instance
     m = MainApplication(root, client_queue_in, client_queue_out, server_ip)
@@ -11,6 +19,7 @@ def start(client_queue_in, client_queue_out, server_ip):
 
     # title and icon
     root.wm_title('Hyperloop Imaging Team')
+    # TODO change to relative path
     img = tk.PhotoImage(file='/home/hyperloop/PyDetect/gui/assets/rit_imaging_team.png')
     root.tk.call('wm', 'iconphoto', root._w, img)
 

@@ -6,7 +6,22 @@ from VideoStream import VideoStream
 import Tkinter as tk
 
 class MainApplication(tk.Frame):
-    def __init__(self, parent, client_queue_in, client_queue_out, server_ip, **kwargs):
+    """
+    Main Window for GUI.
+
+    Consists of several widgets:
+        Telemtry: TelemetryWidget, shows output from valmar
+        Streams: VideoStream, shows video from valmar
+        Stream Control: MasterWidget, controls playback of streams
+        Command: ControlWidget, sends commands and shows logs from valmar
+
+    Args:
+        parent: parent window
+        client_queue_in: queue to get telemetry and logging info
+        client_queue_out: queue to communicate commands
+        server_ip: server IP address for rtsp stream access
+    """
+    def __init__(self, parent, client_queue_in, client_queue_out, server_ip):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
@@ -16,23 +31,25 @@ class MainApplication(tk.Frame):
         self.start_telemtry()
 
     def init_ui(self, client_queue_in, client_queue_out, server_ip):
+        """ Initialize visual elements of widget. """
         self.streams = []
 
-        l_src = 'rtsp://%s/8555' % (server_ip)
+        l_src = 'rtsp://%s/8555' % (server_ip)   # left camera setup
         l = VideoStream(self, l_src, 'Left', num=0)
         l.grid(row=0, column=0)
         self.streams.append(l)
 
-        c_src = 'rtsp://%s/8554' % (server_ip)
+        c_src = 'rtsp://%s/8554' % (server_ip)   # center camera setup
         c = VideoStream(self, c_src, 'Center', num=1, frame_size=(640,480))
         c.grid(row=2, column=0, columnspan=2, rowspan=2)
         self.streams.append(c)
 
-        r_src = 'rtsp://%s/8556' % (server_ip)
+        r_src = 'rtsp://%s/8556' % (server_ip)   # right camera setup
         r = VideoStream(self, r_src, 'Right', num=2)
         r.grid(row=0, column=1)
         self.streams.append(r)
 
+        # radiobuttons for choosing which stream is in focus
         buttons = ['Left', 'Center', 'Right']
 
         frame = tk.Frame(self, bd=2, relief='groove')
@@ -46,12 +63,15 @@ class MainApplication(tk.Frame):
             col += 1
         frame.grid(row=1, column=0)
 
+        # stream control widget
         self.master_w = MasterWidget(self, self.streams)
         self.master_w.grid(row=1, column=1)
 
+        # telemetry display widget
         self.telemetry_w = TelemetryWidget(self, client_queue_in)
         self.telemetry_w.grid(row=0, column=4, rowspan=3)
 
+        # valmar control and logging widget
         self.command_w = ControlWidget(self, client_queue_out)
         self.command_w.grid(row=3, column=4, rowspan=1)
 
@@ -65,15 +85,18 @@ class MainApplication(tk.Frame):
         self.grid(sticky='e')
 
     def start_streams(self):
+        """ start frame capture from streams. """
         for stream in self.streams:
             if stream.vidcap.isOpened():
                 stream.start()   # start grabbing frames
 
     def start_telemtry(self):
+        """ after 5 seconds, start telemtry updates. """
         self.telemetry_w.start()
-        self.after(5000, self.telemetry_w.persistent_update)
+        self.after(5000, self.telemetry_w.persistent_update)   # TODO decide on appropriate interval
 
     def show_stream(self):
+        """ Change stream focus. """
         for s in self.streams:
             s.grid_forget()
 
@@ -119,6 +142,7 @@ class MainApplication(tk.Frame):
         self.update()
     
     def close_(self):
+        """ Customized quit function to allow for safe closure of processes. """
         self.master_w.quit_()
         self.telemetry_w.quit_()
         self.quit()

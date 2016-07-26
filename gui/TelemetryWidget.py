@@ -4,6 +4,13 @@ from Queue import Queue, Empty
 import sys
 
 class TelemetryWidget(tk.Frame):
+    """
+    Shows structured output from valmar.
+
+    Args:
+        parent: parent window
+        client_queue_in: get info from the client
+    """
     def __init__(self, parent, client_queue_in):
         tk.Frame.__init__(self, parent, bd=2, relief='groove')
         self.parent = parent
@@ -26,8 +33,10 @@ class TelemetryWidget(tk.Frame):
         self.p = Process(target=self.get_data)
 
     def init_ui(self):
+        """ Initialize visual elements of widget. """
+        # TODO clean up
         #options = (,padx=5, pady=5, bd=4, justify='left')
-        ### ROBOT
+        # ROBOT
         tk.Label(self, text='Robot:', bd=2, justify='left', relief='ridge', width=19, anchor='w').grid(row=0,column=0, sticky='w')
         tk.Label(self, text='Displacement [m]:', padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18).grid(row=1,column=0, sticky='w')
         self.telemtry_labels['displacement'].grid(row=1,column=1, sticky='w')
@@ -69,16 +78,19 @@ class TelemetryWidget(tk.Frame):
         self.telemtry_labels['time'].grid(row=14, column=1, sticky='w')
 
     def start(self):
+        """ Start grabbing telemtry data from client. """
         self.p.start()
         
     def update_(self, telemetry):
+        """ Update display. """
         for i in self.telemetry_keys:
             self.string_vars[i].set(telemetry[i])
         
     def persistent_update(self, delay=100):
+        """ Update telemetry continuously. """
         item = None
         try:
-            item = self.internal_queue.get(False)
+            item = self.internal_queue.get(False)   # non-blocking
         except Empty:
             pass
         
@@ -91,8 +103,9 @@ class TelemetryWidget(tk.Frame):
         self.after(delay, self.persistent_update, delay)
 
     def get_data(self):
+        """ Grab telemtry data from client continuously. """
         while True:
-            #get data from json or whereever
+            # TODO get data from json or whereever
             try:
                 telem = self.telem_queue.get(False)
             except Empty:
@@ -103,7 +116,9 @@ class TelemetryWidget(tk.Frame):
             self.internal_queue.put(telem)
 
     def quit_(self):
+        """ Customized quit function to allow for safe closure of processes. """
         self.p.terminate()
+        self.quit()
 
 if __name__=='__main__':
     root = tk.Tk()
