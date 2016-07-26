@@ -3,8 +3,8 @@ import sys
 import time
 from listener import ListenerThread
 from Queue import Queue
-
-from ..gui import gui
+sys.path.insert(0, '../gui')
+import gui
 
 marsPort = 1337
 logPort = 1338

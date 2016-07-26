@@ -1,4 +1,3 @@
-import block
 import numpy
 import cv2
 import highlight

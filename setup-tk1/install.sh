@@ -54,3 +54,6 @@ apt-get install python-opencv python-pip python-dev
 pip install numpy
 pip install matplotlib
 
+#imaging stuff
+apt-get install python-imaging-tk
+
