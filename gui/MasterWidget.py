@@ -51,7 +51,8 @@ class MasterWidget(tk.Frame):
 
     def quit_(self):
         for s in self.streams:
-            s.quit_()
+            if s.vidcap.isOpened():
+                s.quit_()
         self.quit()
         self.parent.quit()
 
