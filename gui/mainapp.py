@@ -40,16 +40,19 @@ class MainApplication(tk.Frame):
         """ Initialize visual elements of widget. """
         self.streams = []
 
+        print 'Attempting to connect to rtsp stream from left camera'
         l_src = 'rtsp://' + server_ip + ':8555/'   # left camera setup
         l = VideoStream(self, l_src, 'Left')
         l.grid(row=0, column=0)
         self.streams.append(l)
 
+        print 'Attempting to connect to rtsp stream from centre camera'
         c_src = 'rtsp://' + server_ip + ':8554/'   # center camera setup
         c = VideoStream(self, c_src, 'Center', frame_size=(640,480))
         c.grid(row=2, column=0, columnspan=2, rowspan=2)
         self.streams.append(c)
 
+        print 'Attempting to connect to rtsp stream from right camera'
         r_src = 'rtsp://' + server_ip + ':8556/'   # right camera setup
         r = VideoStream(self, r_src, 'Right')
         r.grid(row=0, column=1)

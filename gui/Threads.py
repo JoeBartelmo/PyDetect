@@ -23,10 +23,9 @@ class VideoThread(threading.Thread):
                 frame = self.transformFunction(frame)
 
             self._queue.put(frame)
-            print 'It\'s ALIVE'
 
         self._vidcap.release()
-        print 'it\'s dead'
+        print 'Killing Video Thread'
 
     def stop(self):
         self._stop.set()
@@ -63,6 +62,7 @@ class TelemetryThread(threading.Thread):
 
             elif item:
                 self._widgets.parent.command_w.log(item)   # TODO change to depickle 
+    print 'Killing Telemetry Thread'
 
     def stop(self):
         self._stop.set()

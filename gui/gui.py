@@ -32,6 +32,6 @@ if __name__=='__main__':
 
     in_queue = Queue()
     out_queue = Queue()
-    server_ip = '129.21.56.100'
+    server_ip = 'hyperlooptk1.student.rit.edu'
 
     start(in_queue, out_queue, server_ip)

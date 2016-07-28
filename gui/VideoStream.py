@@ -66,10 +66,10 @@ class VideoStream(tk.Frame):
         """ Play video from source. """
         #print self.name, self.raw_vid.queue.qsize()#, self.pumpkin.queue.qsize()
 
-        if self.display_q.qsize() != 0:
+        #if self.display_q.qsize() != 0:
 
-            self.update_image()
-
+        #    self.update_image()
+        print 'Playing ' + self.name
         self.after_id = self.after(delay, self.play, delay)
 
     def update_image(self):
