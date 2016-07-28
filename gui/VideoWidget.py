@@ -17,11 +17,11 @@ class VideoWidget(tk.Frame):
         parent: parent window
         frame_size: size to be displayed at, for focus in GUI
     """
-    def __init__(self, parent, frame_size):
+    def __init__(self, parent, frame_size, queue):
         tk.Frame.__init__(self, parent, width=frame_size[0], height=frame_size[1], bd=2, relief='groove')
         self.parent = parent
 
-        self.queue = Queue()
+        self.queue = queue
         self.frame_size = frame_size
 
         # only visual element, Image display label
@@ -32,7 +32,11 @@ class VideoWidget(tk.Frame):
     def update_image(self):
         """ Update image in label to next image in queue. """
 
-        frame = self.queue.get(False)   # non blocking call
+        try:
+            frame = self.queue.get(False)   # non blocking call
+        except:
+            return
+
         if frame == None:
             return
 

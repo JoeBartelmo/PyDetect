@@ -54,8 +54,6 @@ class MasterWidget(tk.Frame):
             if s.vidcap.isOpened():
                 s.play()
 
-        self.after_id = self.after(30, self.play)
-
     def pause(self):
         """ Pause video streams. """ 
         for i in range(50):
@@ -63,15 +61,7 @@ class MasterWidget(tk.Frame):
                 self.after_cancel(self.after_id)
                 self.after_id = None
 
-    def move(self, *args):
-        """ Move video stream to given point. """
-        for s in self.streams:
-            s.move(*args)
-
     def quit_(self):
         """ Customized quit function to allow for safe closure of processes. """
-        for s in self.streams:
-            if s.vidcap.isOpened():
-                s.quit_()
         self.quit()
 

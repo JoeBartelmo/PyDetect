@@ -3,6 +3,8 @@ from multiprocessing import Process
 from Queue import Queue, Empty
 import sys
 
+from Threads import TelemetryThread
+
 class TelemetryWidget(tk.Frame):
     """
     Shows structured output from valmar.
@@ -29,8 +31,7 @@ class TelemetryWidget(tk.Frame):
 
         self.init_ui()
         self.telem_queue = client_queue_in
-        self.internal_queue = Queue()
-        self.p = Process(target=self.get_data)
+        self.tthread = TelemetryThread(self, client_queue_in)
 
     def init_ui(self):
         """ Initialize visual elements of widget. """
@@ -117,7 +118,8 @@ class TelemetryWidget(tk.Frame):
 
     def quit_(self):
         """ Customized quit function to allow for safe closure of processes. """
-        self.p.terminate()
+        self.tthread.stop()
+        self.tthread.join()
         self.quit()
 
 if __name__=='__main__':

@@ -24,13 +24,14 @@ def start(client_queue_in, client_queue_out, server_ip):
     #root.tk.call('wm', 'iconphoto', root._w, img)
 
     # run forever
-    Process(target=root.mainloop).start()
+    root.mainloop()
+    print 'sadhi;knsafdklnfdsknl;fsadjn;fagsdl;kjnfdsalkjnfdslkjn;fdslkfdsalk;n'
 
 if __name__=='__main__':
     from Queue import Queue
 
     in_queue = Queue()
     out_queue = Queue()
-    server_ip = '127.0.0.1'
+    server_ip = '129.21.56.100'
 
     start(in_queue, out_queue, server_ip)

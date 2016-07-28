@@ -44,6 +44,7 @@ def script(in_q, out_q1):
         out_image = highlight.highlight(q_image, pumpkins_indexes, color=(255,0,0))
         out_q1.put(out_image)
 
+
 def demosaic(input_im):
     gray = cv2.cvtColor(input_im, cv2.COLOR_RGB2GRAY)
     img = cv2.cvtColor(gray, cv2.COLOR_BAYER_GR2RGB)
