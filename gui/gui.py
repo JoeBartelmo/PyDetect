@@ -1,6 +1,7 @@
-from mainapp import MainApplication
+from rtsp_stream_test import MainApplication
 import Tkinter as tk
 from multiprocessing import Process
+import threading
 
 def start(client_queue_in, client_queue_out, server_ip):
     """
@@ -25,7 +26,6 @@ def start(client_queue_in, client_queue_out, server_ip):
 
     # run forever
     root.mainloop()
-    print 'sadhi;knsafdklnfdsknl;fsadjn;fagsdl;kjnfdsalkjnfdslkjn;fdslkfdsalk;n'
 
 if __name__=='__main__':
     from Queue import Queue
@@ -35,3 +35,5 @@ if __name__=='__main__':
     server_ip = 'hyperlooptk1.student.rit.edu'
 
     start(in_queue, out_queue, server_ip)
+
+    

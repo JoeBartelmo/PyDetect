@@ -53,8 +53,9 @@ class ControlWidget(tk.Frame):
             self.log.set(self.log.get() + '\n'+ item)
 
 if __name__=='__main__':
+    from Queue import Queue
     root = tk.Tk()
-    ControlWidget(root).grid()
+    ControlWidget(root, Queue()).grid()
     root.update()
     print root.winfo_height(), root.winfo_width()
     root.mainloop()

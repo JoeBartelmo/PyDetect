@@ -1,4 +1,5 @@
 import threading
+import time
 from Queue import Empty
 
 class VideoThread(threading.Thread):
@@ -11,7 +12,7 @@ class VideoThread(threading.Thread):
         self.transformFunction = None
 
     def run(self):
-
+        print time.time()
         while self.stopped() is False:
             
             flag, frame = self._vidcap.read()
@@ -23,9 +24,21 @@ class VideoThread(threading.Thread):
                 frame = self.transformFunction(frame)
 
             self._queue.put(frame)
+            #print self._queue.qsize()
 
+            #size = self._queue.qsize()
+            #while self._queue.qsize() > 5 and self._queue.qsize() >= size - 5 and self.stopped() == False:
+            #    time.sleep(.001)
+
+        self.empty_queue()
+        self._queue.join()
         self._vidcap.release()
         print 'Killing Video Thread'
+
+    def empty_queue(self):
+        while self._queue.empty() is False:
+            __ = self._queue.get()
+            self._queue.task_done()
 
     def stop(self):
         self._stop.set()
@@ -62,7 +75,7 @@ class TelemetryThread(threading.Thread):
 
             elif item:
                 self._widgets.parent.command_w.log(item)   # TODO change to depickle 
-    print 'Killing Telemetry Thread'
+        print 'Killing Telemetry Thread'
 
     def stop(self):
         self._stop.set()

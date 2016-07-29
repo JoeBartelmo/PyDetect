@@ -32,10 +32,6 @@ class MainApplication(tk.Frame):
         self.start_streams()
         self.start_telemtry()
 
-        #self.streams[0].play()
-        #self.streams[1].play()
-        #self.streams[2].play()
-
     def init_ui(self, client_queue_in, client_queue_out, server_ip):
         """ Initialize visual elements of widget. """
         self.streams = []
@@ -96,7 +92,8 @@ class MainApplication(tk.Frame):
     def start_streams(self):
         """ start frame capture from streams. """
         for stream in self.streams:
-            stream.vthread.start()
+            if stream.vidcap.isOpened():
+                stream.vthread.start()
 
     def start_telemtry(self):
         """ after 5 seconds, start telemtry updates. """

@@ -1,17 +1,18 @@
 # Copyright MIT
 # Primary Author: Nathan Dileas
 import time
-from multiprocessing import Queue, Process   # change to from queue import Queue?
+#from multiprocessing import Queue, Process   # change to from queue import Queue?
+from Queue import Queue
 import sys
 
 import cv2
 import numpy
 import Tkinter as tk
 
-#from VideoWidget import VideoWidget
 import img_proc.stealth_pumpkin as stealth_pumpkin
 from img_proc.misc import demosaic, color_correct
 from Threads import VideoThread
+from PIL import Image, ImageTk
 
 import vlc_bindings as vlc
 
@@ -60,29 +61,16 @@ class VideoStream(tk.Frame):
             self.vthread.transform(None)
         if self.show_pump.get() == 1:
             self.vthread.transform(stealth_pumpkin.pumpkin)
-       
-
-    def play(self, delay=0):
-        """ Play video from source. """
-        #print self.name, self.raw_vid.queue.qsize()#, self.pumpkin.queue.qsize()
-
-        #if self.display_q.qsize() != 0:
-
-        #    self.update_image()
-        print 'Playing ' + self.name
-        self.after_id = self.after(delay, self.play, delay)
 
     def update_image(self):
         """ Update image in label to next image in queue. """
 
-        try:
-            frame = self.queue.get(False)   # non blocking call
-        except:
-            return
+        #print 'otha queue' + str(self.display_q.qsize())
+        frame = self.display_q.get(timeout = 0.01)   # non blocking call
 
         if frame == None:
             return
-
+        #print(frame);
         frame_resized = cv2.resize(frame, self.frame_size)
         a = Image.fromarray(frame_resized)
         b = ImageTk.PhotoImage(image=a)
@@ -91,9 +79,10 @@ class VideoStream(tk.Frame):
         self.update()
 
     def quit_(self):
-        """ Customized quit function to allow for safe closure of processes. """        
+        """ Customized quit function to allow for safe closure of processes. """
         self.vthread.stop()
-        self.vthread.join()       
+        if self.vthread.isAlive():
+            self.vthread.join()       
         self.quit()
 
 if __name__=='__main__':

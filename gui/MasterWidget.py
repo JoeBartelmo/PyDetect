@@ -48,11 +48,15 @@ class MasterWidget(tk.Frame):
         self.move_forward.grid(row=0, column=4)
         self.snap_current.grid(row=0, column=5)
         
-    def play(self):
-        """ Play video streams. """ 
+    def play(self, delay=10):
+        """ Play video streams. """
+        self.after_id = None
+        
         for s in self.streams:
-            if s.vidcap.isOpened():
-                s.play()
+            if s.vidcap.isOpened() and s.display_q.qsize() > 0:
+                s.update_image()
+        
+        self.after_id = self.after(delay, self.play, delay)
 
     def pause(self):
         """ Pause video streams. """ 
@@ -63,5 +67,6 @@ class MasterWidget(tk.Frame):
 
     def quit_(self):
         """ Customized quit function to allow for safe closure of processes. """
+        self.pause()
         self.quit()
 
