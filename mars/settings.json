@@ -4,8 +4,8 @@
     "current_battery": 192.0
   },
   "logging": {
-    "index_path":"/home/ubuntu/PyDetect/serverSide-stream/index.js",
-    "output_path":"/home/ubuntu/PyDetect/mars-controller"
+    "index_path":"/home/ubuntu/PyDetect/maven/index.js",
+    "output_path":"/home/ubuntu/PyDetect/mars"
   },
   "conversions": {
     "code_to_rpm" : 111.1,

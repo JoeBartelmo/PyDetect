@@ -64,9 +64,13 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
-<<<<<<< HEAD
 #Stupid PyCharm
 .idea/
+
+#generated outputs
+mars-controller/do-not-delete-manually.hyperloop
+mars-controller/output/
+mars-controller/*.swp
 
 # gedit temp files
 *~
