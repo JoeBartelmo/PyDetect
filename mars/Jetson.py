@@ -28,7 +28,8 @@ class Jetson(object):
         self._pinHash = self.initPins()
         self._devices['Watchdog'] = Watchdog(config, self._devices['Arduino'], self._devices['Mars'], self._pinHash)
         self.initDevices()
-        self.initThreads()
+        self._inputT = InputThread(self)
+        self._statsT = StatisticsThread(self)
         self.initCommands()
 
         self._timestamp = timestamp
@@ -38,6 +39,10 @@ class Jetson(object):
         self.graphUtil = GraphUtility(config)
 
     def initDevices(self):
+        """
+        Make every device in the device hash accessible via Jetson
+        :return:
+        """
         self._arduino = self._devices['Arduino']
         self._stream = self._devices['Stream']
         self._mars = self._devices['Mars']
@@ -52,7 +57,6 @@ class Jetson(object):
         """
         Create 8 pin objects
         """
-
         pinHash = {'resetArduino': GpioPin(166),
                     'connectionLED': GpioPin(163),
                     'warningLED': GpioPin(164),
@@ -66,6 +70,10 @@ class Jetson(object):
         return pinHash
 
     def initCommands(self):
+        """
+        Initialize a list of valid system commands
+        :return:
+        """
         self._sysCommands = {'system shutdown': self.systemShutdown,
                                 'system restart': self.systemRestart,
                                 'recall': self._watchdog.recall,
@@ -126,7 +134,7 @@ class Jetson(object):
 
     def statisticsController(self):
         """
-        The loop for gathering, displaying, and saving data.
+        The controller for generating(Reading) data, checking it for errors and saving it.
         :return:
         """
 
@@ -147,7 +155,7 @@ class Jetson(object):
 
     def displayStatistics(self, data):
         """
-        Takes the data created by Mars and prints it, human readable.
+        Transforms the data into a more readable output for logging
         :param data:
         :return:
         """
@@ -176,17 +184,12 @@ class Jetson(object):
         except Exception as e:
             logging.info("unable to log data because: \r\n {}".format(e))
 
-    def initThreads(self):
-        self._inputT = InputThread(self)
-        self._statsT = StatisticsThread(self)
-
     def manageThreads(self, toggle):
             """
-            This method starts the two threads that will run for the duration of the program. One scanning for input,
+            This method manages the two threads that will run for the duration of the program. One scanning for input,
             the other generating, displaying, and saving data.
             :return:
             """
-
             if (toggle == 'start'):
                 logging.info("Attempting to start threads")
 
@@ -211,6 +214,10 @@ class Jetson(object):
 
 
     def systemRestart(self):
+        """
+        Restart the entire system, arduino included
+        :return:
+        """
         logging.info("initiating safe restart")
         logging.info("shutting down arduino")
         self._arduino.powerOff()
@@ -222,6 +229,10 @@ class Jetson(object):
 
 
     def systemShutdown(self):
+        """
+        Shutdown the system
+        :return:
+        """
         logging.info("initiating safe shutdown")
         ### add functionality to cut power to motor controller
         logging.info("shutting downn this computer")
@@ -229,6 +240,10 @@ class Jetson(object):
         subprocess.call(['sudo poweroff'], shell=True)
 
     def start(self):
+        """
+        Start command for the program. Start all the relays, the motor, stream, and threads
+        :return:
+        """
         self._pinHash['motorRelay'].changeState(0)
         logging.info("Motor relay started")
         self._pinHash['ledRelay'].changeState(0)
@@ -246,10 +261,18 @@ class Jetson(object):
         self.manageThreads('start')
 
     def manual(self):
+        """
+        Manual mode for the jetsons means only starting the input thread allowing the user to start
+        telemetry generation later
+        :return:
+        """
         self._inputT.start()
 
     def exit(self):
-
+        """
+        Exit command for stopping the program.
+        :return:
+        """
         logging.info("Stopping threads")
         self.manageThreads('stop')
 
@@ -275,6 +298,10 @@ class Jetson(object):
 
 
     def hibernate(self):
+        """
+        TODO: Hibernate function for Jetson
+        :return:
+        """
         self._pinHash['motorRelay'].changeState(1)
         logging.info("Motor relay ended")
         self._pinHash['ledRelay'].changeState(1)
@@ -284,6 +311,10 @@ class Jetson(object):
         self._stream.close()
 
     def resetArduino(self):
+        """
+        Reset arduino system command
+        :return:
+        """
         self._pinHash["resetArduino"].toggleOff()
         time.sleep(.2)
         self._pinHash["resetArduino"].toggleOn()

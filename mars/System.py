@@ -43,6 +43,12 @@ class System(object):
 
 
     def initDevices(self, config):
+        """
+        Prepare the arduino, the LED, the motor, and the composite mars object with corresponding VALMAR and devicehash
+        for jetson.
+        :param config:
+        :return:
+        """
 
         #self._arduino.arduinoPowerOn()
         logging.info("Connecting arduino...")

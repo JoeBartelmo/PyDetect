@@ -32,6 +32,9 @@ create 8 pin objects:
 gpio_list = [57,160,161,162,163,164,165,166]
 
 class GpioPin(object):
+    """
+    Class representing the GPIO pins on board.
+    """
 
     def __init__(self, gpioPin, direction = 'out'):
         self._state = 0
@@ -48,6 +51,10 @@ class GpioPin(object):
 
 
     def setup(self):
+        """
+        Set up the GPIO pin by exporting it and setting the direction
+        :return:
+        """
         #exporting the GPIO pin so it can be accessed
         with open('/sys/class/gpio/export','w') as export_file:
             if not os.path.exists('/sys/class/gpio/export/gpio' + str(self._gpioPin)):
@@ -58,6 +65,11 @@ class GpioPin(object):
 
 
     def changeState(self,state):
+        """
+        Change the state of the GPIO pin to the passed in state
+        :param state: The state of the pin provided by the user
+        :return:
+        """
         if self._direction == "out":
             with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
                 value_file.write(str(state))
@@ -67,6 +79,10 @@ class GpioPin(object):
         self._state = state
 
     def toggleOn(self):
+        """
+        Toggle the GPIO pin on (0)
+        :return:
+        """
         if self._direction == "out":
             with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
                 value_file.write(str(0))
@@ -74,6 +90,10 @@ class GpioPin(object):
             raise ValueError("pin must be an output to change it's state")
 
     def toggleOff(self):
+        """
+        Toggle the GPIO pin off (1)
+        :return:
+        """
         if self._direction == "out":
             with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
                 value_file.write(str(1))

@@ -12,6 +12,12 @@ import glob
 class Arduino(object):
 
     def __init__(self, config):
+        """
+        Initialize the arduino. Load the configurations, load the device path, record the time initialized.
+        Try and read from the device.
+        :param config: Configurations from start up
+        :return:
+        """
         self._config = config
         self._init = False #False until initialized
         self._arduinoPath = glob.glob('/dev/ttyACM*')[0]
@@ -20,7 +26,6 @@ class Arduino(object):
         self._timeInit = time.time()
         self._lastLED = 'None yet'
         self._lastMotor = 'None yet'
-
 
         try:
             logging.info("Attempting to connect Arduino")
@@ -40,7 +45,6 @@ class Arduino(object):
         This method manages pulling the raw data off the arduino.
         :return:
         """
-
         assert self._init, "Arduino has not been initialized"
 
         waitStart = time.time()
@@ -77,14 +81,20 @@ class Arduino(object):
         self._controller.flushInput()
         self._controller.flushOutput()
 
-
     def flushInput(self):
-
+        """
+        Flush exclusively the input buffer from the arduino
+        :return:
+        """
         assert self._init, "Arduino has not been initialized"
         self._controller.flushInput()
 
 
     def flushOutput(self):
+        """
+        Flush exclusively the output buffer from the arduino
+        :return:
+        """
         assert self._init, "Arduino has not been initialized"
         self._controller.flushOutput()
 
@@ -97,8 +107,6 @@ class Arduino(object):
 
         assert self._init, "Arduino has not been initialized"
         self._controller.write(controlCode) #send control code over
-
-
 
     def inWaiting(self):
         """
