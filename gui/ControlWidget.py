@@ -25,17 +25,17 @@ class ControlWidget(tk.Frame):
         """ Initialize visual elements of widget. """
         # entry box for commands
         self.cmd = tk.StringVar()
-        e = tk.Entry(self, textvariable=self.cmd, width=27)
-        e.grid(row=1,column=0)
+        e = tk.Entry(self, textvariable=self.cmd, width=30)
+        e.grid(row=1,column=0, padx=5, pady=5, sticky='w')
         e.bind("<Return>", self.send_command)
 
         # send button
-        send_b = tk.Button(self, text='SEND', command=self.send_command)
-        send_b.grid(row=1,column=1, padx=5, pady=5)
+        send_b = tk.Button(self, text='Send', command=self.send_command)
+        send_b.grid(row=1,column=1, padx=5, pady=5, sticky='w')
 
         # log label
-        self.log = tk.StringVar()
-        log_w = tk.Label(self, textvariable=self.log, width=37, height=30, \
+        self.log_var = tk.StringVar()
+        log_w = tk.Label(self, textvariable=self.log_var, width=50, height=15, \
                         bg='white', anchor='sw', justify='left')
         log_w.grid(row=0, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
@@ -45,12 +45,11 @@ class ControlWidget(tk.Frame):
         if cmd is not '':
             self.cmd_queue.put(cmd)   # send command to client
 
-            self.log('CMD SENT: '+ cmd)
+            self.log('CMD Sent: '+ cmd)
             self.cmd.set('')
             
     def log(self, item):
-        if type(item) is str:
-            self.log.set(self.log.get() + '\n'+ item)
+        self.log_var.set(self.log_var.get() + '\n'+ item)
 
 if __name__=='__main__':
     from Queue import Queue
