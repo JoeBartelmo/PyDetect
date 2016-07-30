@@ -26,7 +26,7 @@ class Arduino(object):
         self._timeInit = time.time()
         self._lastLED = 'None yet'
         self._lastMotor = 'None yet'
-        self._arduino_pin = GpioPin(166)
+        self._arduino_pin = GpioPin(57)
 
         try:
             logger.info("Attempting to connect Arduino")

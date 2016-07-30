@@ -63,7 +63,7 @@ class Jetson(object):
         pinHash = { 'connectionLED': GpioPin(163),
                     'warningLED': GpioPin(164),
                     'batteryLED': GpioPin(165),
-                    'motorRelay': GpioPin(57),
+                    'motorRelay': GpioPin(166),
                     'ledRelay': GpioPin(160),
                     'laserRelay': GpioPin(161),
                     'relay4': GpioPin(162)
