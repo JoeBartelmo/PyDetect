@@ -16,6 +16,9 @@ import json
 import subprocess
 import base64
 
+logger = logging.getLogger('mars_logging')
+telemetryLogger = logging.getLogger('telemetry_logging')
+
 class Jetson(object):
     """
     Jetson controls input from the controller, and manages the data sent back from the
@@ -57,8 +60,7 @@ class Jetson(object):
         """
         Create 8 pin objects
         """
-        pinHash = {'resetArduino': GpioPin(166),
-                    'connectionLED': GpioPin(163),
+        pinHash = { 'connectionLED': GpioPin(163),
                     'warningLED': GpioPin(164),
                     'batteryLED': GpioPin(165),
                     'motorRelay': GpioPin(57),
@@ -79,7 +81,7 @@ class Jetson(object):
                                 'recall': self._watchdog.recall,
                                 'stream open': self._stream.open,
                                 'stream close': self._stream.close,
-                                'reset arduino': self.resetArduino,
+                                'reset arduino': self._arduino.resetArduino,
                                 'motors off': self._pinHash['motorRelay'].toggleOn ,
                                 'lasers off': self._pinHash['laserRelay'].toggleOn,
                                 'led off': self._pinHash['ledRelay'].toggleOn,
@@ -113,7 +115,7 @@ class Jetson(object):
         :param controlCode:
         :return: Return specialized command object
         """
-        logging.info("Control code: " + controlCode)
+        logger.info("Control code: " + controlCode)
 
         if controlCode in self._motor._motorCodes:
             return self._motor.issue(controlCode, self._arduino)
@@ -128,7 +130,7 @@ class Jetson(object):
         elif 'graph' in controlCode:
             self.graph(controlCode)
         else:
-            return logging.info("Invalid control code. Check documentation for command syntax.")
+            return logger.warning("Invalid control code. Check documentation for command syntax.")
 
 
 
@@ -138,15 +140,12 @@ class Jetson(object):
         :return:
         """
 
-        logging.debug("Generating Statistics...")
         statistics = self._mars.generateStatistics()
 
         #inject statistics updates
         statistics.update(self._valmar.updateTelemetry())
         statistics.update(self._watchdog.watch(statistics))
-        logging.debug("Displaying Statistics...")
-        logging.info(self.displayStatistics(self._mars._statistics))
-        logging.debug("Saving statistics...")
+        telemetryLogger.info(self.displayStatistics(self._mars._statistics))
         self.saveStats(self._mars._statistics)
 
         #Set the integ time to the time of the last read for calculations
@@ -155,7 +154,7 @@ class Jetson(object):
 
     def displayStatistics(self, data):
         """
-        Transforms the data into a more readable output for logging
+        Transforms the data into a more readable output for logger
         :param data:
         :return:
         """
@@ -182,7 +181,7 @@ class Jetson(object):
                 rawWriter.writerow(data)
 
         except Exception as e:
-            logging.info("unable to log data because: \r\n {}".format(e))
+            logger.warning("unable to log data because: \r\n {}".format(e))
 
     def manageThreads(self, toggle):
             """
@@ -191,25 +190,25 @@ class Jetson(object):
             :return:
             """
             if (toggle == 'start'):
-                logging.info("Attempting to start threads")
+                logger.info("Attempting to start threads")
 
                 try:
 
                     self._inputT.start()
                     self._statsT.start()
                 except Exception as e:
-                    logging.WARNING("error starting threads ({})".format(e))
-                    logging.WARNING("program will terminate")
+                    logger.error("error starting threads ({})".format(e))
+                    logger.error("program will terminate")
                     sys.exit()
             elif (toggle == 'stop'):
-                logging.info("Attempting to stop threads")
+                logger.info("Attempting to stop threads")
 
                 try:
                     self._inputT.stop()
                     self._statsT.stop()
                 except Exception as e:
-                    logging.WARNING("error stopping threads ({})".format(e))
-                    logging.WARNING("program will terminate")
+                    logger.error("error stopping threads ({})".format(e))
+                    logger.error("program will terminate")
                     sys.exit()
 
 
@@ -218,12 +217,12 @@ class Jetson(object):
         Restart the entire system, arduino included
         :return:
         """
-        logging.info("initiating safe restart")
-        logging.info("shutting down arduino")
+        logger.warning("initiating safe restart")
+        logger.warning ("shutting down arduino")
         self._arduino.powerOff()
         ### add functionality to cut power to motor controller
-        logging.info("restarting this computer")
-        logging.info("this connection will be lost")
+        logger.warning("restarting this computer")
+        logger.warning("this connection will be lost")
         time.sleep(1)
         subprocess.call(['sudo reboot'], shell=True)
 
@@ -233,10 +232,10 @@ class Jetson(object):
         Shutdown the system
         :return:
         """
-        logging.info("initiating safe shutdown")
+        logger.info("initiating safe shutdown")
         ### add functionality to cut power to motor controller
-        logging.info("shutting downn this computer")
-        logging.info("this connection will be lost")
+        logger.info("shutting downn this computer")
+        logger.info("this connection will be lost")
         subprocess.call(['sudo poweroff'], shell=True)
 
     def start(self):
@@ -245,19 +244,19 @@ class Jetson(object):
         :return:
         """
         self._pinHash['motorRelay'].changeState(0)
-        logging.info("Motor relay started")
+        logger.info("Motor relay started")
         self._pinHash['ledRelay'].changeState(0)
-        logging.info("LED relay started")
+        logger.info("LED relay started")
         self._pinHash['laserRelay'].changeState(0)
-        logging.info("Laser relay started")
+        logger.info("Laser relay started")
 
-        logging.info("Starting motor...")
+        logger.info("Starting motor...")
         self._motor.start()
 
-        logging.info("Starting stream...")
+        logger.info("Starting stream...")
         self._stream.open()
 
-        logging.info("Starting threads...")
+        logger.info("Starting threads...")
         self.manageThreads('start')
 
     def manual(self):
@@ -273,24 +272,24 @@ class Jetson(object):
         Exit command for stopping the program.
         :return:
         """
-        logging.info("Stopping threads")
+        logger.info("Stopping threads")
         self.manageThreads('stop')
 
-        logging.info("Braking motor...")
+        logger.info("Braking motor...")
         self._motor.brake()
 
-        logging.info("Closing stream...")
+        logger.info("Closing stream...")
         self._sysCommands['stream close']()
 
-        logging.info(("Turning off LEDs..."))
+        logger.info(("Turning off LEDs..."))
         self._led.issue(self._arduino, "brightness 0")
 
-        self._pinHash['motorRelay'].changeState(1)
-        logging.info("Motor relay stopped")
-        self._pinHash['ledRelay'].changeState(1)
-        logging.info("LED relay stopped")
-        self._pinHash['laserRelay'].changeState(1)
-        logging.info("Laser relay stopped")
+        self._pinHash['motorRelay'].toggleOff()
+        logger.info("Motor Circuit turned off")
+        self._pinHash['ledRelay'].toggleOff()
+        logger.info("LED Circuit turned off")
+        self._pinHash['laserRelay'].toggleOff()
+        logger.info("Laser Circuit turned off")
 
         self.manageThreads('stop')
 
@@ -302,22 +301,14 @@ class Jetson(object):
         TODO: Hibernate function for Jetson
         :return:
         """
-        self._pinHash['motorRelay'].changeState(1)
-        logging.info("Motor relay ended")
-        self._pinHash['ledRelay'].changeState(1)
-        logging.info("LED relay ended")
-        self._pinHash['laserRelay'].changeState(1)
-        logging.info("Laser relay ended")
+        self._pinHash['motorRelay'].toggleOff()
+        logger.info("Motor relay ended")
+        self._pinHash['ledRelay'].toggleOff()
+        logger.info("LED relay ended")
+        self._pinHash['laserRelay'].toggleOff()
+        logger.info("Laser relay ended")
         self._stream.close()
 
-    def resetArduino(self):
-        """
-        Reset arduino system command
-        :return:
-        """
-        self._pinHash["resetArduino"].toggleOff()
-        time.sleep(.2)
-        self._pinHash["resetArduino"].toggleOn()
 
     def graph(self, graphCommand):
         #This is kinda hacky, but we want to keep mars independant of the server
@@ -325,7 +316,7 @@ class Jetson(object):
         #packets. To do this we would need to have mars have some 'knowledge' of 
         #the server. As I said, that's not preferred.
 
-        #My solution is to base64 encode the file, and send it via the logging
+        #My solution is to base64 encode the file, and send it via the logger
         #this simplifies the entire process, and keeps us from coupling
         graphCommand = graphCommand.split(' ')
         if len(graphCommand) > 1:
@@ -342,8 +333,8 @@ class Jetson(object):
     def logFile(self, fileIn):    
         with open(fileIn, 'rb') as f:
             nameLength = str(len(fileIn))
-            logging.info('<<<_file_record_>>>' + nameLength + '_' + fileIn + base64.b64encode(f.read()))
+            logger.info('<<<_file_record_>>>' + nameLength + '_' + fileIn + base64.b64encode(f.read()))
 
     def listLogs(self):
-        logging.info(self.graphUtil.get_all_outputs())
+        logger.info(self.graphUtil.get_all_outputs())
  

@@ -1,5 +1,7 @@
 import logging
 
+logger = logging.getLogger('mars_logger')
+
 
 class LED(object):
     """
@@ -70,9 +72,9 @@ class Motor(object):
         """
 
         if self._enabled == 0:
-            return logging.info("Motor must be enabled before you can move! Use: enable motor")
+            return logger.info("Motor must be enabled before you can move! Use: enable motor")
         if self._brake == 1:
-            return logging.info("Brake must be disabled to move! Use: disable break")
+            return logger.info("Brake must be disabled to move! Use: disable break")
 
         if "forward" in myCode:
             if RepresentsInt(myCode[8]):
@@ -87,7 +89,7 @@ class Motor(object):
         elif "brake" in myCode:
             self.brake()
         else:
-            return logging.info("Speed must be 0-9. Direction must be forward or backward.")
+            return logger.info("Speed must be 0-9. Direction must be forward or backward.")
 
     def toggleMotor(self, myCode):
         """
@@ -133,7 +135,7 @@ class Motor(object):
         :return:
         """
         self._arduino.write("M0010")
-        logging.info("Arduino braking...")
+        logger.info("Arduino braking...")
 
     def write(self):
         """
@@ -141,7 +143,7 @@ class Motor(object):
         :return:
         """
         command = 'M' + str(self._enabled) + str(self._direction) + str(self._brake) + str(self._speed)
-        logging.info(command)
+        logger.info(command)
         self._lastCommand = command
         self._arduino.write(command)
 

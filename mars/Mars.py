@@ -7,6 +7,8 @@ import time
 import logging
 import sys
 
+logger = logging.getLogger('mars_logging')
+
 class Mars(object):
     """
     Mars is in control of pulling data from the arduino and generating relevant telemetry statistics. This includes
@@ -51,11 +53,9 @@ class Mars(object):
         currenttime = time.time()
         self._integTime = currenttime - copy
 
-        logging.info("Integ time:" + str(self._integTime))
+        logger.debug("Integ time:" + str(self._integTime) + ':\t'  + str(rawArray))
         self._statistics['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
 
-
-        logging.info(rawArray)
         rpm = rawArray[0]
         self._statistics['RPM'] = float(rpm)
         sysV = rawArray[1]

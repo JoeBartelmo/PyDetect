@@ -1,5 +1,8 @@
+import logging
 import threading
 import sys
+
+logger = logging.getLogger('mars_logging')
 
 class InputThread(threading.Thread):
     def __init__(self, jetson):
@@ -10,7 +13,7 @@ class InputThread(threading.Thread):
     def run(self):
         while self.stopped() is False:
             self._jetson.safeInput()
-        print 'Input thread Stopped'
+        logger.info('Input thread Stopped')
 
     def stop(self):
         self._stop.set()
@@ -27,7 +30,7 @@ class StatisticsThread(threading.Thread):
     def run(self):
         while self.stopped() is False:
             self._jetson.statisticsController()
-        print 'Statistics Thread Stopped'
+        logger.info('Statistics thread Stopped')
 
     def stop(self):
         self._stop.set()

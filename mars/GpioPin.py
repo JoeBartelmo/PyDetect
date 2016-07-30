@@ -1,5 +1,5 @@
 import logging
-import os
+
 """
 
 Usable GPIO pins are as follows
@@ -27,8 +27,7 @@ create 8 pin objects:
 
 """
 
-
-
+logger = logging.getLogger('mars_logger')
 gpio_list = [57,160,161,162,163,164,165,166]
 
 class GpioPin(object):
@@ -45,8 +44,8 @@ class GpioPin(object):
             #self.setup()
             self.toggleOn()
         else:
-            logging.warning("GPIO PIN SETUP FAILED\r\nGPIO pin {} does not exist".format(str(gpioPin)))
-            logging.warning("GPIO pin must be one of the following {}".format(str(gpio_list)))
+            logger.warning("GPIO PIN SETUP FAILED\r\nGPIO pin {} does not exist".format(str(gpioPin)))
+            logger.warning("GPIO pin must be one of the following {}".format(str(gpio_list)))
             raise ValueError("invalid GPIO pin number")
 
 
