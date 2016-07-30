@@ -3,9 +3,8 @@ from PIL import Image, ImageTk
 import numpy
 import Tkinter as tk
 from Threads import VideoThread
-from Queue import Queue
+from Queue import Queue, Empty
 import time
-
 
 from TelemetryWidget import TelemetryWidget
 from ControlWidget import ControlWidget
@@ -170,7 +169,7 @@ if __name__ == '__main__':
 
     vid = cv2.VideoCapture(stream)
 
-    while True:
+    while vid.isOpened() is True:
         fl, fr = vid.read()
         if fl:
             cv2.imshow(stream, fr)

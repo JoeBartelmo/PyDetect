@@ -1,7 +1,8 @@
-from rtsp_stream_test import MainApplication
 import Tkinter as tk
-from multiprocessing import Process
-import threading
+import os
+
+from rtsp_stream_test import MainApplication
+from TopMenu import TopMenu
 
 def start(client_queue_in, client_queue_out, server_ip):
     """
@@ -18,12 +19,15 @@ def start(client_queue_in, client_queue_out, server_ip):
     m = MainApplication(root, client_queue_in, client_queue_out, server_ip)
     root.protocol("WM_DELETE_WINDOW", m.close_)
 
+    # menu
+    menu_ = TopMenu(root, 'config.json')
+    root.config(menu=menu_)
+
     # title and icon
     root.wm_title('Hyperloop Imaging Team')
-    # TODO change to relative path
-    #img = tk.PhotoImage()
-    #root.tk.call('wm', 'iconphoto', root._w, img)
-
+    img = tk.PhotoImage(os.path.join(os.getcwd(), 'assets/rit_imaging_team.png'))
+    root.tk.call('wm', 'iconphoto', root._w, img)
+    print 1
     # run forever
     root.mainloop()
 
