@@ -60,13 +60,13 @@ class Jetson(object):
         """
         Create 8 pin objects
         """
-        pinHash = { 'connectionLED': GpioPin(163),
+        pinHash = { 'connectionLED': GpioPin(166),
                     'warningLED': GpioPin(164),
                     'batteryLED': GpioPin(165),
-                    'motorRelay': GpioPin(166),
-                    'ledRelay': GpioPin(160),
+                    'motorRelay': GpioPin(163),
+                    'ledRelay': GpioPin(162),
                     'laserRelay': GpioPin(161),
-                    'relay4': GpioPin(162)
+                    'relay4': GpioPin(160)
                  }
 
         return pinHash

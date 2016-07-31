@@ -136,7 +136,8 @@ class Arduino(object):
         Reset arduino system command
         :return:
         """
+        logger.info('Resetting the Arduino...')
         self._arduino_pin.toggleOff()
-        time.sleep(.2)
+        time.sleep(.5)
         self._arduino_pin.toggleOn()
 
