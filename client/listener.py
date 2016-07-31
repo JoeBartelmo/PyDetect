@@ -3,23 +3,38 @@ import struct
 import pickle
 import logging
 from threading import Thread
+import socket
+import logging
+from ColorLogger import initializeLogger 
 
+logger = initializeLogger('./', logging.INFO, 'mars_logging', sout = True, colors = True)
 class ListenerThread(threading.Thread):
-    def __init__(self, q, socket):
+    def __init__(self, q, serverAddr, port, name = 'Thread', displayInConsole = True):
         super(ListenerThread, self).__init__()
         self._stop = threading.Event()
         self.q = q
-        self.socket = socket
+        self.serverAddr = serverAddr
+        self.port = port
+        self.name = name
+        self.displayInConsole = displayInConsole
     
     def run(self):
+        print 'Listener Thread "'+self.name+'" waiting for connection...'
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.bind((self.serverAddr, self.port))
+        listener.listen(1)
+
+        listenerConnection, address = listener.accept()
+
+        print 'Listener Thread "'+self.name+'" connected!'
         while self.stopped() is False:
-            chunk = self.socket.recv(4)
+            chunk = listenerConnection.recv(4)
             if len(chunk) < 4:
                 break
             slen = struct.unpack('>L', chunk)[0]
-            chunk = self.socket.recv(slen)
+            chunk = listenerConnection.recv(slen)
             while len(chunk) < slen:
-                chunk = chunk + self.socket.recv(slen - len(chunk))
+                chunk = chunk + listenerConnection.recv(slen - len(chunk))
             obj = pickle.loads(chunk)
             record = logging.makeLogRecord(obj)
 
@@ -30,8 +45,11 @@ class ListenerThread(threading.Thread):
             else:
                 if self.q is not None:
                     self.q.put(record)
-                print record.msg
-        print 'Listener Thread Stopped'
+                if self.displayInConsole:
+                    logger.log(record.levelno, record.msg)
+
+        listener.close()
+        print 'Listener Thread "'+self.name+'" Stopped'
 
     def decode_file_and_write(self, data):
         #remove magic

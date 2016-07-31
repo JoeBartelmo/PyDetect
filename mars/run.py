@@ -9,8 +9,7 @@ import os.path
 import json
 from collections import namedtuple
 from System import System
-from ColorLogger import ColoredFormatter
-from ColorLogger import formatter_message
+from ColorLogger import initializeLogger 
 
 marsLoggerName = 'mars_logging'
 telemetryLoggerName = 'telemetry_logging'
@@ -19,30 +18,6 @@ telemetryLoggerName = 'telemetry_logging'
 def parseConfig(json_string):
     config = json.loads(json_string, object_hook=lambda configObject: namedtuple('X', configObject.keys())(*configObject.values()))
     return config
-
-def initializeLogger(path, level, name, formatter = None, sout = False, colors = False):
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-
-    if formatter is None:
-        if colors is True:
-            format_string = "%(levelname)s$RESET: %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
-            color_format = formatter_message(format_string, True)
-            formatter = ColoredFormatter(color_format)
-        else:
-            formatter = logging.Formatter("%(levelname)s: %(message)s")
-
-    fileHandler = logging.FileHandler(os.path.join(path, name + ".txt"),"w")
-    fileHandler.setFormatter(formatter)
-    fileHandler.setLevel(level)
-
-    logger.addHandler(fileHandler)
-    if sout is True:
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-
-    return logger
 
 def initOutput(config, q = None, debugMode = False):
     """

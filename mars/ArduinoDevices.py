@@ -1,7 +1,6 @@
 import logging
 
-logger = logging.getLogger('mars_logger')
-
+logger = logging.getLogger('mars_logging')
 
 class LED(object):
     """
@@ -74,22 +73,22 @@ class Motor(object):
         if self._enabled == 0:
             return logger.info("Motor must be enabled before you can move! Use: enable motor")
         if self._brake == 1:
-            return logger.info("Brake must be disabled to move! Use: disable break")
+            return logger.info("Brake must be disabled to move! Use: disable brak")
+        
+        splitCodes = myCode.split(' ')
 
-        if "forward" in myCode:
-            if RepresentsInt(myCode[8]):
-                self._direction = 1
-                self._speed = myCode[8]
-                self.write()
-        elif "backward" in myCode:
-            if RepresentsInt(myCode[8]):
-                self._direction = 0
-                self._speed = myCode[9]
-                self.write()
+        if "forward" in myCode and len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
+            self._direction = 1
+            self._speed = splitCodes[1]
+            self.write()
+        elif "backward" in myCode and len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
+            self._direction = 0
+            self._speed = splitCodes[1]
+            self.write()
         elif "brake" in myCode:
             self.brake()
         else:
-            return logger.info("Speed must be 0-9. Direction must be forward or backward.")
+            return logger.warning("Speed must be 0-9. Direction must be forward or backward.")
 
     def toggleMotor(self, myCode):
         """
@@ -122,9 +121,9 @@ class Motor(object):
         Default motor configurations
         :return:
         """
-        self._speed = 4
+        self._speed = 0 
         self._direction = 1
-        self._enabled = 1
+        self._enabled = 0
         self._brake = 0
 
         self.write()
@@ -143,7 +142,7 @@ class Motor(object):
         :return:
         """
         command = 'M' + str(self._enabled) + str(self._direction) + str(self._brake) + str(self._speed)
-        logger.info(command)
+        logger.info('Writing the following command to the Arduino: ' + command)
         self._lastCommand = command
         self._arduino.write(command)
 

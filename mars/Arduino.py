@@ -138,6 +138,6 @@ class Arduino(object):
         """
         logger.info('Resetting the Arduino...')
         self._arduino_pin.toggleOff()
-        time.sleep(.5)
+        time.sleep(1)
         self._arduino_pin.toggleOn()
 
