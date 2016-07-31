@@ -48,12 +48,13 @@ class Arduino(object):
         waitStart = time.time()
         waitTime = time.time() - waitStart
         timeout = self._config.constants.timeout
-        
+
         while self.inWaiting() == 0:
             if waitTime < timeout:
                 waitTime = time.time() - waitStart
             elif waitTime >= timeout:
-                logger.critical("No data coming from arduino before timeout")
+                logger.error("No data coming from arduino before timeout")
+                break;
         
         # added short delay just in case data was in transit
         time.sleep(.001)
