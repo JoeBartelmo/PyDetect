@@ -150,6 +150,7 @@ class Arduino(object):
                         result = function()
                     return result
                 except (IOError, serial.serialutil.SerialException):
+                    logger.warning('Caught a serialexception to arduino, passing through')
                     pass
                 except Exception, err:     
                     #IOErrors are thrown by the serial controller, but they do not have the class IOError
