@@ -42,7 +42,10 @@ class Mars(object):
         :return:
         """
 
-        serialData = self._arduino.serial_readline()
+        serialData = None
+        if self._arduino._init == True:
+            serialData = self._arduino.serial_readline()
+        #returns none on error as well
         if serialData is None:
             logger.warning('Could not retrieve data from arduino')
             return None
@@ -58,7 +61,7 @@ class Mars(object):
         currenttime = time.time()
         self._integTime = currenttime - copy
 
-        logger.debug("Integ time:" + str(self._integTime) + ':\t'  + str(rawArray))
+        logger.debug("Integ time:" + str(round(self._integTime, 4)) + ':\t'  + str(rawArray))
         self._statistics['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
 
         rpm = rawArray[0]

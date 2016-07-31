@@ -152,6 +152,11 @@ class Jetson(object):
 
             #Set the integ time to the time of the last read for calculations
             self._mars._integTime = time.time()
+        else:
+            i = 0
+            while self._arduino._init is False and i < 5:
+                time.sleep(5)
+                i += 1
 
 
     def displayStatistics(self, data):
@@ -195,7 +200,6 @@ class Jetson(object):
                 logger.info("Attempting to start threads")
 
                 try:
-
                     self._inputT.start()
                     self._statsT.start()
                 except Exception as e:
@@ -245,11 +249,11 @@ class Jetson(object):
         Start command for the program. Start all the relays, the motor, stream, and threads
         :return:
         """
-        self._pinHash['motorRelay'].changeState(0)
+        self._pinHash['motorRelay'].toggleOff()
         logger.info("Motor relay started")
-        self._pinHash['ledRelay'].changeState(0)
+        self._pinHash['ledRelay'].toggleOff()
         logger.info("LED relay started")
-        self._pinHash['laserRelay'].changeState(0)
+        self._pinHash['laserRelay'].toggleOff()
         logger.info("Laser relay started")
 
         logger.info("Starting motor...")

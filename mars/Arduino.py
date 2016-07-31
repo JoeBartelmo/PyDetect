@@ -23,7 +23,7 @@ class Arduino(object):
         :return:
         """
         self._config = config
-        self._init = False #False until initialized
+        self._init = False 
         self._timeInit = time.time()
         self._lastLED = 'None yet'
         self._lastMotor = 'None yet'
@@ -32,7 +32,8 @@ class Arduino(object):
 
         try:
             logger.info("Attempting to connect Arduino")
-            self.assertArduinoConnection()
+            if self.attemptConnection() == False:
+                self.resetArduino()
         except AssertionError:
             logger.critical("Arduino not connected: device path either wrong or arduino misconfigured")
             logger.critical("Check MARS user manual for details")
@@ -103,42 +104,35 @@ class Arduino(object):
         """
         return self._wrapFunctionRetryOnFail(self._controller.inWaiting)
 
-    def resetArduino(self):
+    def resetArduino(self, timeout = 15):
         """
         Reset arduino system command
         :return:
         """
+        self._init = False
         logger.info('Resetting the Arduino...')
-        self._arduino_pin.toggleOff()
-        time.sleep(1)
         self._arduino_pin.toggleOn()
+        self._arduino_pin.toggleOff()
 
-    def assertArduinoConnection(self):
-        """
-        Validates that the arduino is connected.
-        In the event that the arduino is no longer
-        connected, 5 retry attempts will occur to attempt
-        a rekindling. 
-
-        On fail: assertion error
-        On success: void
-        """ 
-        for i in range(5):
-            try:
-                arduinoPath = glob.glob('/dev/ttyACM*')[0]
-                if self._arduinoPath != arduinoPath:
-                    logger.info('Arduino path declared at:' + arduinoPath)
-                    self._arduinoPath = arduinoPath
-                    self._controller = serial.Serial(self._arduinoPath, self._config.constants.baud_rate)
-                self._init = True
+        time.sleep(timeout)#give os time to refresh
+        #attempt to restablish connection
+        for index in range(timeout):
+            if self.attemptConnection():
                 break
-            except IndexError:
-                self._init = False
-                logger.warning('Attempt ' + str(i) + ', Could not connect to arduino, attempting to reset VIA arduino pin...')
-                self.resetArduino()
-                time.sleep(3)
-        
-        assert self._init, "Arduino has not been initialized"
+            logger.warning('Attempt ' + str(index+1) + ', Could not connect to arduino, attempting to reset VIA arduino pin (10second wait)...')
+            time.sleep(1)
+        assert self._init, "Arduino Connection Lossed"
+
+    def attemptConnection(self):
+        try:
+            arduinoPath = glob.glob('/dev/ttyACM*')[0]
+            logger.info('Arduino path declared at:' + arduinoPath)
+            self._arduinoPath = arduinoPath
+            self._controller = serial.Serial(self._arduinoPath, self._config.constants.baud_rate)
+            self._init = True
+        except (IndexError, serial.serialutil.SerialException):
+            self._init = False
+        return self._init
 
     def _wrapFunctionRetryOnFail(self, function, onFail = None, attempts = 1, arg = None):
         """
@@ -146,10 +140,10 @@ class Arduino(object):
         the function in a try..catch IOError, and attempt to rerun the function once,
         Additionally it adds an 'assertArduinoConnetion' prior to running the function
         """
-        if self._init:
-            for i in range(attempts):
+        if self._init == True:
+            for index in range(attempts):
                 try:
-                    self.assertArduinoConnection()
+                    #self.assertArduinoConnection()
                     if arg is not None:
                         result = function(arg)
                     else:
@@ -160,11 +154,13 @@ class Arduino(object):
                 except Exception, err:     
                     #IOErrors are thrown by the serial controller, but they do not have the class IOError
                     #err = sys.exc_info()[0]
-                    if err.__module__ != 'termios':
+                    if hasattr(err, '__module__') == False or err.__module__ != 'termios':
                         logger.warning('Unknown Error raised: ' + str(vars(err)));
                         raise err
             if onFail != None:
                 return onFail()
+            elif self._init == False:
+                logger.error('Arduino Connection is not established')
         else:
-            logger.error('Arduino Connection is not established')
+            logger.warning('Attempted to access arduino during connection reset...')
 

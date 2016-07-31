@@ -1,5 +1,5 @@
 import logging
-
+import os
 """
 
 Usable GPIO pins are as follows
@@ -41,8 +41,6 @@ class GpioPin(object):
 
         if gpioPin in gpio_list:
             self._gpioPin = gpioPin
-            #self.setup()
-            self.toggleOn()
         else:
             logger.warning("GPIO PIN SETUP FAILED\r\nGPIO pin {} does not exist".format(str(gpioPin)))
             logger.warning("GPIO pin must be one of the following {}".format(str(gpio_list)))
@@ -79,23 +77,23 @@ class GpioPin(object):
 
     def toggleOn(self):
         """
-        Toggle the GPIO pin on (0)
-        :return:
-        """
-        if self._direction == "out":
-            with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
-                value_file.write(str(0))
-        else:
-            raise ValueError("pin must be an output to change it's state")
-
-    def toggleOff(self):
-        """
-        Toggle the GPIO pin off (1)
+        Toggle the GPIO pin on (1)
         :return:
         """
         if self._direction == "out":
             with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
                 value_file.write(str(1))
+        else:
+            raise ValueError("pin must be an output to change it's state")
+
+    def toggleOff(self):
+        """
+        Toggle the GPIO pin off (0)
+        :return:
+        """
+        if self._direction == "out":
+            with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
+                value_file.write(str(0))
         else:
             raise ValueError("pin must be an output to change it's state")
 
