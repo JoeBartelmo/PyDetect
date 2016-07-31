@@ -54,8 +54,6 @@ class Arduino(object):
                 waitTime = time.time() - waitStart
             elif waitTime >= timeout:
                 logger.critical("No data coming from arduino before timeout")
-                logger.critical("Ending program, check arduino or timeout duration")
-                sys.exit()
         
         # added short delay just in case data was in transit
         time.sleep(.001)
@@ -158,13 +156,14 @@ class Arduino(object):
                     return result
                 except (IOError, serial.serialutil.SerialException):
                     pass
-                except:     
+                except Exception, err:     
                     #IOErrors are thrown by the serial controller, but they do not have the class IOError
-                    err = sys.exc_info()[0]
+                    #err = sys.exc_info()[0]
                     if err.__module__ != 'termios':
                         logger.warning('Unknown Error raised: ' + str(vars(err)));
                         raise err
             if onFail != None:
                 return onFail()
-        logger.error('Arduino Connection is not established')
+        else:
+            logger.error('Arduino Connection is not established')
 
