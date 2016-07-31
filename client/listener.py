@@ -46,7 +46,7 @@ class ListenerThread(threading.Thread):
                 if self.q is not None:
                     self.q.put(record)
                 if self.displayInConsole:
-                    logger.log(record.levelno, record.msg)
+                    logger.log(record.levelno, record.msg + ' (' + record.filename + ':' + str(record.lineno) + ')')
 
         listener.close()
         print 'Listener Thread "'+self.name+'" Stopped'

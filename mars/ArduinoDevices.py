@@ -20,11 +20,11 @@ class LED(object):
         :return:
         """
         self._arduino = arduino
+        splitCode = controlCode.split(' ')
 
-        if "brightness" in controlCode:
-            if RepresentsInt(controlCode[11]):
-                self._brightness = controlCode[11]
-                self.write()
+        if len(splitCode) == 2 and 'brightness' == splitCode[0] and RepresentsInt(controlCode[1]):
+            self._brightness = controlCode[1] 
+            self.write()
 
     def write(self):
         """
@@ -77,15 +77,11 @@ class Motor(object):
         
         splitCodes = myCode.split(' ')
 
-        if "forward" in myCode and len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
-            self._direction = 1
+        if len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
+            self._direction = 1 if 'forward' == splitCodes[0] else 0
             self._speed = splitCodes[1]
             self.write()
-        elif "backward" in myCode and len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
-            self._direction = 0
-            self._speed = splitCodes[1]
-            self.write()
-        elif "brake" in myCode:
+        elif "brake" == splitCodes[0]:
             self.brake()
         else:
             return logger.warning("Speed must be 0-9. Direction must be forward or backward.")

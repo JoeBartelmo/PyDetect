@@ -32,7 +32,7 @@ def initializeLogger(path, level, name, formatter = None, sout = False, colors =
 
     if formatter is None:
         if colors is True:
-            format_string = "%(levelname)s$RESET: %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
+            format_string = "%(levelname)s$RESET: %(message)s"
             color_format = formatter_message(format_string, True)
             formatter = ColoredFormatter(color_format)
         else:

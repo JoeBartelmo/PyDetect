@@ -42,7 +42,12 @@ class Mars(object):
         :return:
         """
 
-        serialData = self._arduino.serial_readline().rstrip()
+        serialData = self._arduino.serial_readline()
+        if serialData is None:
+            logging.warning('Could not retrieve data from arduino')
+            return None
+        else:
+            serialData = serialData.rstrip()
         rawArray = re.split(",", serialData)
 
         while(len(rawArray) < 5):

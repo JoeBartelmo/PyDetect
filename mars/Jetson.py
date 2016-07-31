@@ -143,14 +143,15 @@ class Jetson(object):
 
         statistics = self._mars.generateStatistics()
 
-        #inject statistics updates
-        statistics.update(self._valmar.updateTelemetry())
-        statistics.update(self._watchdog.watch(statistics))
-        telemetryLogger.info(self.displayStatistics(self._mars._statistics))
-        self.saveStats(self._mars._statistics)
+        if statistics is not None:
+            #inject statistics updates
+            statistics.update(self._valmar.updateTelemetry())
+            statistics.update(self._watchdog.watch(statistics))
+            telemetryLogger.info(self.displayStatistics(self._mars._statistics))
+            self.saveStats(self._mars._statistics)
 
-        #Set the integ time to the time of the last read for calculations
-        self._mars._integTime = time.time()
+            #Set the integ time to the time of the last read for calculations
+            self._mars._integTime = time.time()
 
 
     def displayStatistics(self, data):
