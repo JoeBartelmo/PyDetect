@@ -6,7 +6,6 @@ from ArduinoDevices import Motor, LED
 from Jetson import Jetson
 from Mars import Mars
 from Stream import Stream
-from Threads import InputThread, StatisticsThread
 from Watchdog import Watchdog
 from Valmar import Valmar
 
@@ -32,17 +31,14 @@ class System(object):
         logger.info("System initialized.")
 
         if q is None:
-            answer = raw_input("Would you like to start? Y/N: ")
+            answer = raw_input("Would you like to start? Y/n: ")
         else:
-            logger.info('Would you like to start? Y/N')
+            logger.info('Would you like to start? Y/n')
             answer = q.get()
-        if answer.lower() in ('y', 'yes'):
-            print ("The system will start. ")
+        if answer.lower() == 'n' or answer.lower() == 'no':
+            self._jetson.exit()
+        else:
             self._jetson.start()
-        if answer.lower() in ('n', 'no'):
-            print ("Manual mode starting")
-            self._jetson.manual()
-
 
     def initDevices(self, config):
         """

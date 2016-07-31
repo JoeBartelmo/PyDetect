@@ -5,7 +5,7 @@ ark9719
 
 from GpioPin import GpioPin
 from Watchdog import Watchdog
-from Threads import InputThread, StatisticsThread
+from Threads import StatisticsThread
 from Valmar import Valmar
 from GraphUtility import GraphUtility
 import logging
@@ -31,10 +31,10 @@ class Jetson(object):
         self._pinHash = self.initPins()
         self._devices['Watchdog'] = Watchdog(config, self._devices['Arduino'], self._devices['Mars'], self._pinHash)
         self.initDevices()
-        self._inputT = InputThread(self)
         self._statsT = StatisticsThread(self)
         self.initCommands()
 
+        self._exit = False
         self._timestamp = timestamp
         self._config = config
         self._header = False
@@ -106,8 +106,8 @@ class Jetson(object):
         else:
             controlCode = self._q.get()
         myCodeInput = self.recieveInput(controlCode)
-
-
+        
+        return controlCode
 
     def recieveInput(self, controlCode):
         """
@@ -133,7 +133,13 @@ class Jetson(object):
         else:
             return logger.warning("Invalid control code. Check documentation for command syntax.")
 
-
+    def inputLoop(self):
+        """
+        Runs a loop over the safeInput function, checks self._exit to determine
+        whether or not it should hop out of the loop
+        """
+        while self._exit == False:
+            self.safeInput()
 
     def statisticsController(self):
         """
@@ -200,22 +206,16 @@ class Jetson(object):
                 logger.info("Attempting to start threads")
 
                 try:
-                    self._inputT.start()
                     self._statsT.start()
                 except Exception as e:
                     logger.error("error starting threads ({})".format(e))
-                    logger.error("program will terminate")
-                    sys.exit()
             elif (toggle == 'stop'):
                 logger.info("Attempting to stop threads")
 
                 try:
-                    self._inputT.stop()
                     self._statsT.stop()
                 except Exception as e:
                     logger.error("error stopping threads ({})".format(e))
-                    logger.error("program will terminate")
-                    sys.exit()
 
 
     def systemRestart(self):
@@ -264,15 +264,10 @@ class Jetson(object):
 
         logger.info("Starting threads...")
         self.manageThreads('start')
-
-    def manual(self):
-        """
-        Manual mode for the jetsons means only starting the input thread allowing the user to start
-        telemetry generation later
-        :return:
-        """
-        self._inputT.start()
-
+        
+        logger.info('Setting up input receiver (main thread)...')
+        self.inputLoop()
+            
     def exit(self):
         """
         Exit command for stopping the program.
@@ -297,9 +292,7 @@ class Jetson(object):
         self._pinHash['laserRelay'].toggleOff()
         logger.info("Laser Circuit turned off")
 
-        self.manageThreads('stop')
-
-        sys.exit()
+        self._exit = True
 
 
     def hibernate(self):
