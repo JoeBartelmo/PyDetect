@@ -117,10 +117,10 @@ class Motor(object):
         Default motor configurations
         :return:
         """
-        self._speed = 0 
-        self._direction = 1
         self._enabled = 0
-        self._brake = 0
+        self._direction = 0
+        self._brake = 1
+        self._speed = 0 
 
         self.write()
 

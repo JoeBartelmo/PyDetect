@@ -29,6 +29,9 @@ class Watchdog(object):
         ### add functionality to cut power to motor controller
         logger.info("shutting downn this computer")
         logger.info("this connection will be lost")
+        self._pinHash['motorRelay'].toggleOff()
+        self._pinHash['laserRelay'].toggleOff()
+        self._pinHash['ledRelay'].toggleOff()       
         subprocess.call(['sudo poweroff'], shell=True)
 
     def watch(self, statistics):
