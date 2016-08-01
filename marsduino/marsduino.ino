@@ -146,7 +146,7 @@ DaqTelemetry* daq(double frontDistance, double backDistance)
   // subtracting 2.5 to rezero scale 1to4V --> -1.5to1.5
   double scaledVoltage = encoderVoltage - 2.5;
   // 1V from motor controller corresponds to -2000 RPM, 4V-->2000RPM
-  daqTelemetry->systemRpm = (scaledVoltage * 1333.33) - 84.0;
+  daqTelemetry->systemRpm = (scaledVoltage * 1333.33);
   //conversion necessary for 90 Amp ammeter
   daqTelemetry->systemVoltage = inputV / 12.99;
   //conversion necessary for 90 Amp ammeter
@@ -203,11 +203,12 @@ void loop() {
   if (Serial.available() > 0) {
     control_input();
   }
+  //Solve serial buffer problem
+  Serial.print('\0');
   daqTelemetry = daq(ir_distance(frontIrPin), ir_distance(backIrPin));
   increase_accuracy(daqTelemetry);
   save_and_send(daqTelemetry);
   delete daqTelemetry;
-  
   //Serial.print("freeMemory()=");
   //Serial.println(freeMemory());
 }
