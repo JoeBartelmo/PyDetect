@@ -6,8 +6,10 @@ from threading import Thread
 import socket
 import logging
 from ColorLogger import initializeLogger 
+from select import select
 
-logger = initializeLogger('./', logging.INFO, 'mars_logging', sout = True, colors = True)
+logger = initializeLogger('./', logging.DEBUG, 'mars_logging', sout = True, colors = True)
+
 class ListenerThread(threading.Thread):
     def __init__(self, q, serverAddr, port, name = 'Thread', displayInConsole = True):
         super(ListenerThread, self).__init__()
@@ -17,39 +19,45 @@ class ListenerThread(threading.Thread):
         self.port = port
         self.name = name
         self.displayInConsole = displayInConsole
+        self.socketTimeout = 3
     
     def run(self):
-        print 'Listener Thread "'+self.name+'" waiting for connection...'
+        logger.debug('Clietn side Listener Thread "'+self.name+'" waiting for connection...')
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.bind((self.serverAddr, self.port))
         listener.listen(1)
 
         listenerConnection, address = listener.accept()
+        listenerConnection.setblocking(0)
+        listenerConnection.settimeout(self.socketTimeout)
 
-        print 'Listener Thread "'+self.name+'" connected!'
+        logger.debug('Client side Listener Thread "'+self.name+'" connected!')
         while self.stopped() is False:
-            chunk = listenerConnection.recv(4)
-            if len(chunk) < 4:
-                break
-            slen = struct.unpack('>L', chunk)[0]
-            chunk = listenerConnection.recv(slen)
-            while len(chunk) < slen:
-                chunk = chunk + listenerConnection.recv(slen - len(chunk))
-            obj = pickle.loads(chunk)
-            record = logging.makeLogRecord(obj)
+            isReady = select([listenerConnection],[],[],self.socketTimeout)
+            if isReady[0]:
+                chunk = listenerConnection.recv(4)
+                if len(chunk) < 4:
+                    break
+                slen = struct.unpack('>L', chunk)[0]
+                chunk = listenerConnection.recv(slen)
+                while len(chunk) < slen:
+                    chunk = chunk + listenerConnection.recv(slen - len(chunk))
+                obj = pickle.loads(chunk)
+                record = logging.makeLogRecord(obj)
 
-            #If our record is prefixed with <<<_file_record_>>>
-            #we're gonna write a file with the base64 decoded content
-            if '<<<_file_record_>>>' in record.msg:
-                self.decode_file_and_write(record.msg)
-            else:
-                if self.q is not None:
-                    self.q.put(record)
-                if self.displayInConsole:
-                    logger.log(record.levelno, record.msg + ' (' + record.filename + ':' + str(record.lineno) + ')')
+                #If our record is prefixed with <<<_file_record_>>>
+                #we're gonna write a file with the base64 decoded content
+                if '<<<_file_record_>>>' in record.msg:
+                    self.decode_file_and_write(record.msg)
+                else:
+                    if self.q is not None:
+                        self.q.put(record)
+                    if self.displayInConsole:
+                        logger.log(record.levelno, record.msg + ' (' + record.filename + ':' + str(record.lineno) + ')')
 
+        listenerConnection.close()
         listener.close()
-        print 'Listener Thread "'+self.name+'" Stopped'
+        logger.debug('Client Side Listener Thread "'+self.name+'" Stopped')
 
     def decode_file_and_write(self, data):
         #remove magic

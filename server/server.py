@@ -22,10 +22,10 @@ q = Queue()
 
 def wireLogToPort(name, port):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     socketHandler = logging.handlers.SocketHandler('127.0.0.1', port)
     logger.addHandler(socketHandler)
-    logger.info('complete handshake')
+    logger.debug('complete handshake')
     return logger
 
 try:
@@ -45,13 +45,15 @@ try:
                     thread.start()
                     #all output from mars gets pipped to the rootLogger
                     #all input from connection is received through the listender, and piped through a queue to mars
-                    Mars.run(data, q)
+                    Mars.run(data, q, True)
                     #if we are here then mars' exit command was called
                     print 'Closing connection with ', client_address, ' and stopping all communication'
                     thread.stop()
                     connection.close()
         finally:
             connection.close()
+except KeyboardInterrupt:
+    sock.close()
 finally:
     sock.close()
 

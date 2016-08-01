@@ -20,7 +20,8 @@ if len(sys.argv):
 print 'Using server address:', serverAddr
 
 #Queues responsible for communicating between GUI and this socket client
-guiInput = Queue()
+guiTelemetryInput = Queue()
+guiLoggingInput = Queue()
 guiOutput = Queue()
 
 #sockets that continuously receive data from server and
@@ -47,7 +48,7 @@ try:
         command = raw_input('\n')
         sock.sendall(command)
         if command == killCommand:
-            time.sleep(5)#lets all messages be displayed from listener
+            time.sleep(2)#lets all messages be displayed from listener
             sock.close()
             telemThread.stop()
             debugThread.stop()

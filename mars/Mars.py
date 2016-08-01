@@ -50,7 +50,7 @@ class Mars(object):
             logger.warning('Could not retrieve data from arduino')
             return None
         else:
-            serialData = serialData.rstrip()
+            serialData = serialData.strip().replace('\0','')
         rawArray = re.split(",", serialData)
 
         while(len(rawArray) < 5):
