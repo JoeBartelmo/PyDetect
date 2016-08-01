@@ -1,3 +1,9 @@
+#include "MemoryFree.h"
+#include "DaqTelemetry.h"
+
+//Defined as a global for memory 
+DaqTelemetry *daqTelemetry;
+
 //Motor
 int enablePin = 13; //enable/disable motor
 int revPin = 11; //seting fwd/rev
@@ -15,18 +21,6 @@ int frontIrPin = A3;
 int backIrPin = A4;
 int numSamples = 10;
 
-/**
-   Data specifically that the daq generates and returns
-*/
-class DaqTelemetry
-{
-  public:
-    double systemVoltage;//voltage coming off the batteries
-    double systemCurrent;//system current
-    double systemRpm;//computed rpm coming off the encoder
-    double frontDistance; //computed distance from the object in front
-    double backDistance; //computed distance from the object in back
-};
 
 
 void setup() {
@@ -141,7 +135,7 @@ void control_input()
 */
 DaqTelemetry* daq(double frontDistance, double backDistance)
 {
-  DaqTelemetry *telemetry = new DaqTelemetry();
+  daqTelemetry = new DaqTelemetry();
 
   //  READING FROM CURRENT AND VOLTAGE PINS ON AMMETER
   double inputV = analogRead(voltagePin);
@@ -152,17 +146,17 @@ DaqTelemetry* daq(double frontDistance, double backDistance)
   // subtracting 2.5 to rezero scale 1to4V --> -1.5to1.5
   double scaledVoltage = encoderVoltage - 2.5;
   // 1V from motor controller corresponds to -2000 RPM, 4V-->2000RPM
-  telemetry->systemRpm = (scaledVoltage * 1333.33) - 84.0;
+  daqTelemetry->systemRpm = (scaledVoltage * 1333.33) - 84.0;
   //conversion necessary for 90 Amp ammeter
-  telemetry->systemVoltage = inputV / 12.99;
+  daqTelemetry->systemVoltage = inputV / 12.99;
   //conversion necessary for 90 Amp ammeter
-  telemetry->systemCurrent = inputI / 7.4;
+  daqTelemetry->systemCurrent = inputI / 7.4;
 
   //Copy over
-  telemetry->frontDistance = frontDistance;
-  telemetry->backDistance = backDistance;
+  daqTelemetry->frontDistance = frontDistance;
+  daqTelemetry->backDistance = backDistance;
 
-  return telemetry;
+  return daqTelemetry;
 }
 
 /**
@@ -209,10 +203,12 @@ void loop() {
   if (Serial.available() > 0) {
     control_input();
   }
-  DaqTelemetry *daqTelemetry = daq(ir_distance(frontIrPin), ir_distance(backIrPin));
+  daqTelemetry = daq(ir_distance(frontIrPin), ir_distance(backIrPin));
   increase_accuracy(daqTelemetry);
   save_and_send(daqTelemetry);
-  //free memory
   delete daqTelemetry;
+  
+  //Serial.print("freeMemory()=");
+  //Serial.println(freeMemory());
 }
 
