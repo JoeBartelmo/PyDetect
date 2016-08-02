@@ -12,10 +12,10 @@ telemLog = 1339
 
 killCommand = 'exit'
 
-sys.argv.pop()
+sys.argv.pop(0)
 
 serverAddr = 'localhost'
-if len(sys.argv):
+if len(sys.argv) == 1:
     serverAddr = sys.argv[0]
 print 'Using server address:', serverAddr
 
@@ -26,8 +26,8 @@ guiOutput = Queue()
 
 #sockets that continuously receive data from server and
 #pipe to the user
-telemThread = ListenerThread(None, serverAddr, telemLog, 'Telemetry Receive', displayInConsole = False)
-debugThread = ListenerThread(None, serverAddr, debugLog, 'Logging Receive')
+telemThread = ListenerThread(guiTelemetryInput, serverAddr, telemLog, 'Telemetry Receive', displayInConsole = False)
+debugThread = ListenerThread(guiLoggingInput, serverAddr, debugLog, 'Logging Receive')
 
 telemThread.start()
 debugThread.start()
@@ -42,17 +42,17 @@ try:
     sock.sendall(message)
     
     # start gui
-    #gui.start(guiInput, guiOutput, server_addr)
+    gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
 
-    while True:
-        command = raw_input('\n')
-        sock.sendall(command)
-        if command == killCommand:
-            time.sleep(2)#lets all messages be displayed from listener
-            sock.close()
-            telemThread.stop()
-            debugThread.stop()
-            break
+    #while True:
+        #command = raw_input('\n')
+        #sock.sendall(command)
+        #if command == killCommand:
+        #    time.sleep(2)#lets all messages be displayed from listener
+        #    sock.close()
+        #    telemThread.stop()
+        #    debugThread.stop()
+        #    break
     
 except KeyboardInterrupt:
     print 'closing socket'
