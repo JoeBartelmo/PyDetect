@@ -24,7 +24,7 @@ class ListenerThread(threading.Thread):
     def run(self):
         logger.debug('Clietn side Listener Thread "'+self.name+'" waiting for connection...')
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.bind((self.serverAddr, self.port))
+        listener.bind(('', self.port))
         listener.listen(1)
 
         listenerConnection, address = listener.accept()

@@ -1,0 +1,75 @@
+{
+    "Reset Arduino" : {
+        "command": "reset arduino",
+        "options": null
+    },
+    "Move Forward" : {
+        "command": "forward",
+        "options": ["0","1","2","3","4","5","6","7","8","9"]
+    },
+    "Move Backward" : {
+        "command": "backward",
+        "options": ["0","1","2","3","4","5","6","7","8","9"]
+    },
+    "Toggle Brake" : {
+        "command": "brake",
+        "options": null
+    },
+    "Stream" : {
+        "command": "stream",
+        "options": ["open", "close"]
+    },
+    "Motor" : {
+        "command": "motors",
+        "options": ["on", "off"]
+    },
+    "System Shutdown" : {
+        "command": "system shutdown",
+        "options": null
+    },
+    "Recall" : {
+        "command": "recall",
+        "options": null
+    },
+    "Lasers" : {
+        "command": "lasers",
+        "options": ["on","off"]
+    },
+    "LED" : {
+        "command": "led",
+        "options": ["on","off"]
+    },
+    "Brightness" : {
+        "command": "brightness",
+        "options": ["0","1","2","3","4","5","6","7","8","9"]
+    },
+    "Start Telemetry" : {
+        "command": "start statistics",
+        "options": null
+    },
+    "Hibernate" : {
+        "command": "hibernate",
+        "options": null
+    },
+    "Start" : {
+        "command": "start",
+        "options": null
+    },
+    "Disconnect From Mars": {
+        "command": "exit",
+        "options": null
+    },
+    "Watchdog" : {
+        "command": "watchdog",
+        "options": ["on", "off"]
+    },
+    "List All Logs" : {
+        "command": "list logs",
+        "options": null
+    },
+    "Graph Current Telemetry Logs": {
+        "command": "graph",
+        "options": null
+    }
+}
+
