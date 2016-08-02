@@ -12,6 +12,8 @@ int speedPin = 9; //speedPin
 int voltagePin = A0; //ammeter voltage pin
 int currentPin = A1; //ammeter current pin
 int encoderPin = A5; //pin for motor controller
+int referencePin = A2; //reference Pin to compare against current, voltage and encoder pin
+boolean directionOfTravel;
 
 //LEDS
 int ledPin = 10;
@@ -21,6 +23,13 @@ int frontIrPin = A3;
 int backIrPin = A4;
 int numSamples = 10;
 
+
+//Conversions
+double rpmMultiplier = 666.6;
+double voltageMultiplier = 0.076982;
+double currentMultiplier = 0.135135;
+double scaleOffset = 2.5;
+int realReference = 512;
 
 
 void setup() {
@@ -61,13 +70,13 @@ int charToInt(char c) {
 
    @param irPin: The pin at which to access the distance sensor
 */
-double ir_distance(int irPin)
+double ir_distance(int irPin, int voltageOffset)
 {
   int sampleSum = 0;
 
   for (int index = 0; index < numSamples; index++)
   {
-    int distanceVoltage = analogRead(irPin);
+    int distanceVoltage = analogRead(irPin) + voltageOffset;
     sampleSum += distanceVoltage;
     delay(60);
   }
@@ -119,6 +128,9 @@ void control_input()
         int speedDutyCycle = charToInt(speedValue) * 25.5; //converts input ao a 0-255 scale
         analogWrite(speedPin, speedDutyCycle); //sets up PWM on the speedPin
         break;
+
+        //Changing the global direction for reference in the DAQ
+        directionOfTravel = codeArray[2] == '0' ? 0 : 1; // one is forwards, zero is backwards
       }
     //LED code
     case 'L': {
@@ -133,31 +145,49 @@ void control_input()
 /**
    Generates a DaqTelemetry object
 */
-DaqTelemetry* daq(double frontDistance, double backDistance)
+DaqTelemetry* daq()
 {
   daqTelemetry = new DaqTelemetry();
 
-  //  READING FROM CURRENT AND VOLTAGE PINS ON AMMETER
-  double inputV = analogRead(voltagePin);
-  double inputI = analogRead(currentPin);
+  //generating an offset based off of the reference voltage sent from motor controller
+  double referenceVoltage = analogRead(referencePin);
+  int voltageOffset = 0; //realReference - referenceVoltage;      //currently depreciated until we can get an accurate voltmeter
+    
+  //Motor Calculations
+  double encoderVoltage = (analogRead(encoderPin)+voltageOffset)*.0049; //.0049 convert to real voltage values
+  double scaledVoltage = encoderVoltage - scaleOffset;
+  double finalRpm = scaledVoltage * rpmMultiplier;
+  
+  if((scaledVoltage < -1.5) && (scaledVoltage > -2.0)){  
+    finalRpm = -1000.0;  }
+  else if (scaledVoltage < -2.0){
+    finalRpm = 0.0;
+  }
+  else if (scaledVoltage > 1.5){
+    finalRpm = 1000;  }
+    
+  //System Voltage Calculations
+  double inputV = analogRead(voltagePin) + voltageOffset;
+  double finalV = inputV * voltageMultiplier;
+  
+  //System Current Calculations
+  double inputI = analogRead(currentPin) + voltageOffset;
+  double finalI = inputI * currentMultiplier;
 
-  // multiplier to return a value in Volts
-  double encoderVoltage = analogRead(encoderPin) * .0049;
-  // subtracting 2.5 to rezero scale 1to4V --> -1.5to1.5
-  double scaledVoltage = encoderVoltage - 2.5;
-  // 1V from motor controller corresponds to -2000 RPM, 4V-->2000RPM
-  daqTelemetry->systemRpm = (scaledVoltage * 1333.33);
-  //conversion necessary for 90 Amp ammeter
-  daqTelemetry->systemVoltage = inputV / 12.99;
-  //conversion necessary for 90 Amp ammeter
-  daqTelemetry->systemCurrent = inputI / 7.4;
+  //Distance Calculations
+  int irPin = directionOfTravel == '0' ? backIrPin : frontIrPin;
+  double distance = ir_distance(irPin, voltageOffset);
 
-  //Copy over
-  daqTelemetry->frontDistance = frontDistance;
-  daqTelemetry->backDistance = backDistance;
+
+ //assigning values to daqTelemetry object  
+  daqTelemetry->systemRpm = finalRpm;
+  daqTelemetry->systemVoltage = finalV; 
+  daqTelemetry->systemCurrent = finalI;
+  daqTelemetry->distance = distance;
 
   return daqTelemetry;
 }
+
 
 /**
    Send daqTelemtry data over the serial
@@ -175,38 +205,26 @@ String distance_to_string(double distance){
 
 void save_and_send(DaqTelemetry *daqTelemetry)
 {
-  String outputFrontDistance = distance_to_string(daqTelemetry->frontDistance);
-  String outputBackDistance = distance_to_string(daqTelemetry->backDistance);
+  String outputDistance = distance_to_string(daqTelemetry->distance);
   
   String daqString = String(daqTelemetry->systemRpm) + "," +
                      String(daqTelemetry->systemVoltage) + "," +
                      String(daqTelemetry->systemCurrent) + "," +
-                     String(outputFrontDistance) + "," +
-                     String(outputBackDistance);
+                     outputDistance;
   Serial.println(daqString);
 }
 
 /**
    TBD
 */
-void increase_accuracy(DaqTelemetry *daqTelemetry)
-{
-  //arduino believes there is a small amount of motion even when stationary
-  //this corrects the arduinos native offset, without affecting real data collection
-  if (abs(daqTelemetry->systemRpm) < 75.0) {
-    daqTelemetry->systemRpm = 0.0; //arduino believes there is a small amount of motion even when stationary
-  }
 
-}
 
 void loop() {
   if (Serial.available() > 0) {
     control_input();
   }
   //Solve serial buffer problem
-  Serial.print('\0');
-  daqTelemetry = daq(ir_distance(frontIrPin), ir_distance(backIrPin));
-  increase_accuracy(daqTelemetry);
+  daqTelemetry = daq();
   save_and_send(daqTelemetry);
   delete daqTelemetry;
   //Serial.print("freeMemory()=");

@@ -32,11 +32,10 @@ class System(object):
 
         if q is None:
             answer = raw_input("Would you like to start? Y/n: ")
-        else:
-            logger.info('Would you like to start? Y/n')
-            answer = q.get()
-        if answer.lower() == 'n' or answer.lower() == 'no':
-            self._jetson.exit()
+            if answer.lower() == 'n' or answer.lower() == 'no':
+                self._jetson.exit()
+            else:
+                self._jetson.start()
         else:
             self._jetson.start()
 

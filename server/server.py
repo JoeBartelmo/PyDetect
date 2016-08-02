@@ -15,15 +15,15 @@ telemLog = 1339
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('127.0.0.1', marsPort)
+server_address = ('', marsPort)
 sock.bind(server_address)
 sock.listen(1)
 q = Queue()
 
-def wireLogToPort(name, port):
+def wireLogToPort(name, client, port):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
-    socketHandler = logging.handlers.SocketHandler('127.0.0.1', port)
+    socketHandler = logging.handlers.SocketHandler(client, port)
     logger.addHandler(socketHandler)
     logger.debug('complete handshake')
     return logger
@@ -33,9 +33,10 @@ try:
         print >>sys.stderr, 'Server launched on socket 1337; waiting for client...'
         connection, client_address = sock.accept()
         try:
-            print >>sys.stderr, 'connection from', client_address
-            log = wireLogToPort('mars_logging', debugLog)
-            wireLogToPort('telemetry_logging', telemLog)
+            client_ip, client_port = client_address
+            print >>sys.stderr, 'connection from', client_ip
+            log = wireLogToPort('mars_logging', client_ip, debugLog)
+            wireLogToPort('telemetry_logging', client_ip, telemLog)
             data = connection.recv(4096)
             print >>sys.stderr, 'received "%s"' % data
             if data is not None:
