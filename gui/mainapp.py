@@ -11,19 +11,17 @@ from ControlWidget import ControlWidget
 from img_proc.misc import demosaic
 
 class MainApplication(tk.Frame):
-    def __init__(self, parent, client_queue_in, client_queue_out, server_ip):
+    def __init__(self, parent, client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.stream_order = [0,1,2]
 
-        self.init_ui(client_queue_in, client_queue_out, server_ip)
+        self.init_ui(client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
         
         self.start_streams()
         self.start_telemetry()
-
-        self.after(100, self.display_streams)
         
-    def init_ui(self, client_queue_in, client_queue_out, server_ip):
+    def init_ui(self, client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
         """ Initialize visual elements of widget. """
         self.streams = []
 
@@ -45,15 +43,15 @@ class MainApplication(tk.Frame):
         # Image display label
         self.initial_im = tk.PhotoImage()
         self.image_label = tk.Label(self, image=self.initial_im, width=640,height=720)
-        self.image_label.grid(row=0, column=0, rowspan=2)
+        self.image_label.grid(row=0, column=0, rowspan=2, sticky='nw')
 
         # telemetry display widget
-        self.telemetry_w = TelemetryWidget(self, client_queue_in)
-        self.telemetry_w.grid(row=0, column=1, rowspan=3)
+        self.telemetry_w = TelemetryWidget(self, client_queue_telem)
+        self.telemetry_w.grid(row=0, column=1, padx=5, pady=5, sticky='nw')
 
         # valmar control and logging widget
-        self.command_w = ControlWidget(self, client_queue_out)
-        self.command_w.grid(row=0, column=2, rowspan=1)
+        self.command_w = ControlWidget(self, client_queue_cmd, client_queue_log)
+        self.command_w.grid(row=1, column=1, rowspan=2, padx=5, pady=5, sticky='nw')
 
         # radiobuttons for choosing which stream is in focus
         buttons = ['Left', 'Center', 'Right']
@@ -61,13 +59,13 @@ class MainApplication(tk.Frame):
         frame = tk.Frame(self, bd=2, relief='groove')
         col = 0
         self.stream_active = tk.IntVar()
-        self.stream_active.set(1)
+        self.stream_active.set(0)
         for text in buttons:
             b = tk.Radiobutton(frame, text=text, variable=self.stream_active, value=col,\
                          command=self.choose_focus)
             b.grid(row=0, column=col, padx=5, pady=5)
             col += 1
-        frame.grid(row=1, column=0)
+        frame.grid(row=1, column=0, sticky='s')
 
         self.grid()
 
@@ -106,6 +104,10 @@ class MainApplication(tk.Frame):
     def display_streams(self, delay=0):
         a, b, c = self.stream_order
 
+        for s in self.streams:
+            if not s._vidcap.isOpened():
+                return
+        
         l_frame = demosaic(self.streams[a]._queue.get())
         c_frame = demosaic(self.streams[b]._queue.get())
         r_frame = demosaic(self.streams[c]._queue.get())
@@ -136,6 +138,8 @@ class MainApplication(tk.Frame):
             if s._vidcap.isOpened():
                 s.start()
 
+        self.after(100, self.display_streams)
+
     def start_telemetry(self):
         """ after 5 seconds, start telemtry updates. """
         self.telemetry_w.tthread.start()
@@ -146,7 +150,8 @@ class MainApplication(tk.Frame):
 
         for stream in self.streams:
             stream.stop()
-            stream.join()
+            if stream.is_alive():
+                stream.join()
 
         self.quit()
         self.parent.quit()
@@ -164,6 +169,7 @@ if __name__ == '__main__':
 
     # run forever
     root.mainloop()
+
     """
     stream = 'rtsp://129.21.56.100:8556/'
 

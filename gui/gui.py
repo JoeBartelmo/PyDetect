@@ -1,10 +1,10 @@
 import Tkinter as tk
 import os
 
-from rtsp_stream_test import MainApplication
+from mainapp import MainApplication
 from TopMenu import TopMenu
 
-def start(client_queue_in, client_queue_out, server_ip):
+def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
     """
     Start graphical interface for client.
 
@@ -16,18 +16,18 @@ def start(client_queue_in, client_queue_out, server_ip):
     root = tk.Tk()   # get root window
 
     # define mainapp instance
-    m = MainApplication(root, client_queue_in, client_queue_out, server_ip)
+    m = MainApplication(root, client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
     root.protocol("WM_DELETE_WINDOW", m.close_)
 
     # menu
-    menu_ = TopMenu(root, 'config.json')
+    menu_ = TopMenu(root, 'config.json', client_queue_cmd)
     root.config(menu=menu_)
 
     # title and icon
     root.wm_title('Hyperloop Imaging Team')
     img = tk.PhotoImage(os.path.join(os.getcwd(), 'assets/rit_imaging_team.png'))
     root.tk.call('wm', 'iconphoto', root._w, img)
-    print 1
+
     # run forever
     root.mainloop()
 

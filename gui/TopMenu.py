@@ -1,38 +1,60 @@
 import Tkinter as tk
+import json
+import copy
 
 class TopMenu(tk.Menu):
-    def __init__(self, parent, config_file):
+    def __init__(self, parent, config_file, queue):
         tk.Menu.__init__(self, parent)
+        self.client_queue_in = queue
 
         self.init_ui(config_file)
 
+   
     def init_ui(self, config_file):
-        config = self.load_config(config_file)
-        # format is dropdown text, item text, then command
-        config = {'help':{'help':'help'}, 'commands':{'stop':{'brake':'1232', 'other':'213ewqf'},'start':'M1103'}}
+        commands_config = self.load_commands(config_file)
 
-        for key in config:
-            _menu = tk.Menu(self, tearoff=0)
-            
-            for key_1 in config[key]:
-                if type(config[key][key_1]) == str:
-                    _menu.add_command(label=key_1, command=config[key][key_1])
-                elif type(config[key][key_1]) == dict:
-                    _menu_1 = tk.Menu(self, tearoff=0)
-                    #print key, key_1, config
-                    for key_2 in config[key][key_1]:
-                        _menu_1.add_command(label=key_2, command=config[key][key_1][key_2])
-                    _menu.add_cascade(label=key_1, menu=_menu_1)
-    
-            self.add_cascade(label=key, menu=_menu)
+        command_menu = tk.Menu(self, tearoff=0)
+        for key, val in commands_config.iteritems():
+            print key, val
+            copyval = '%s' % val['command']
+            if val['options'] is None:
+                
+                command_menu.add_command(label=key, command=self.commandFunc(copyval))
 
-    def load_config(self, config_file):
+            else:
+                options = tk.Menu(self, tearoff=0)
+                
+                for opt in val['options']:
+                    options.add_command(label=opt, command=self.commandFunc(copyval, opt))
+                command_menu.add_cascade(label=key, menu=options)
+
+        self.add_cascade(label='Commands', menu=command_menu)
+
+    def commandFunc(self, cmd, option=False):
+        if option == False:
+            command = cmd
+        else:
+            command = cmd + ' ' + option
         
-        pass
+        def f():
+            print id(cmd)
+            self.client_queue_in.put(command)
+        return f
+    
+    def put_thing_on_q(self):
+        print self.config()
+
+    def load_commands(self, config_file):
+        with open(config_file) as f:
+            configuration = \
+                json.load(f)#.replace('\n', '').replace(' ', '').replace('\r', '')
+        return configuration
 
 if __name__=='__main__':
+    from Queue import Queue
     root = tk.Tk()
-    t = TopMenu(root, 'config.json')
+    q = Queue()
+    t = TopMenu(root, 'operations.json', q)
     root.config(menu=t)
     #t.grid()
     root.update()
