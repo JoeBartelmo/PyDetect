@@ -1,9 +1,7 @@
-
 import json
 import re
 
 class Valmar():
-
 
     def __init__(self, config, mars):
         self._config = config

@@ -6,9 +6,10 @@ from ArduinoDevices import Motor, LED
 from Jetson import Jetson
 from Mars import Mars
 from Stream import Stream
-from Threads import InputThread, StatisticsThread
 from Watchdog import Watchdog
 from Valmar import Valmar
+
+logger = logging.getLogger('mars_logging')
 
 class System(object):
 
@@ -21,39 +22,41 @@ class System(object):
         #Prepare stream
         self._devices['Stream'] = Stream(config, timestamp)
 
-        logging.info("Connecting Jetson")
+        logger.info("Connecting Jetson")
         self._jetson = Jetson(self._devices, config, timestamp, q)
         time.sleep(.5)
 
 
-        logging.info("All devices connected")
-        logging.info("System initialized.")
+        logger.info("All devices connected")
+        logger.info("System initialized.")
 
         if q is None:
-            answer = raw_input("Would you like to start? Y/N: ")
+            answer = raw_input("Would you like to start? Y/n: ")
         else:
-            logging.info('Would you like to start? Y/N')
+            logger.info('Would you like to start? Y/n')
             answer = q.get()
-        if answer.lower() in ('y', 'yes'):
-            print ("The system will start. ")
+        if answer.lower() == 'n' or answer.lower() == 'no':
+            self._jetson.exit()
+        else:
             self._jetson.start()
-        if answer.lower() in ('n', 'no'):
-            print ("Manual mode starting")
-            self._jetson.manual()
-
 
     def initDevices(self, config):
+        """
+        Prepare the arduino, the LED, the motor, and the composite mars object with corresponding VALMAR and devicehash
+        for jetson.
+        :param config:
+        :return:
+        """
 
         #self._arduino.arduinoPowerOn()
-        logging.info("Connecting arduino...")
-        logging.info('Attempting to connect Arduino')
+        logger.info("Connecting arduino...")
         myArduino = Arduino(config)
         time.sleep(.5)
 
         #Flush buffers
         myArduino.flushBuffers()
 
-        logging.info("Starting Mars...")
+        logger.info("Starting Mars...")
         myLED = LED()
         myMotor = Motor()
         myMars = Mars(myArduino, config, myLED, myMotor)

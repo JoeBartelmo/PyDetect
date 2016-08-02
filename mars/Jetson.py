@@ -5,7 +5,7 @@ ark9719
 
 from GpioPin import GpioPin
 from Watchdog import Watchdog
-from Threads import InputThread, StatisticsThread
+from Threads import StatisticsThread
 from Valmar import Valmar
 from GraphUtility import GraphUtility
 import logging
@@ -15,6 +15,9 @@ import time
 import json
 import subprocess
 import base64
+
+logger = logging.getLogger('mars_logging')
+telemetryLogger = logging.getLogger('telemetry_logging')
 
 class Jetson(object):
     """
@@ -28,9 +31,10 @@ class Jetson(object):
         self._pinHash = self.initPins()
         self._devices['Watchdog'] = Watchdog(config, self._devices['Arduino'], self._devices['Mars'], self._pinHash)
         self.initDevices()
-        self.initThreads()
+        self._statsT = StatisticsThread(self)
         self.initCommands()
 
+        self._exit = False
         self._timestamp = timestamp
         self._config = config
         self._header = False
@@ -38,6 +42,10 @@ class Jetson(object):
         self.graphUtil = GraphUtility(config)
 
     def initDevices(self):
+        """
+        Make every device in the device hash accessible via Jetson
+        :return:
+        """
         self._arduino = self._devices['Arduino']
         self._stream = self._devices['Stream']
         self._mars = self._devices['Mars']
@@ -52,26 +60,28 @@ class Jetson(object):
         """
         Create 8 pin objects
         """
-
-        pinHash = {'resetArduino': GpioPin(166),
-                    'connectionLED': GpioPin(163),
+        pinHash = { 'connectionLED': GpioPin(166),
                     'warningLED': GpioPin(164),
                     'batteryLED': GpioPin(165),
-                    'motorRelay': GpioPin(57),
-                    'ledRelay': GpioPin(160),
+                    'motorRelay': GpioPin(163),
+                    'ledRelay': GpioPin(162),
                     'laserRelay': GpioPin(161),
-                    'relay4': GpioPin(162)
+                    'relay4': GpioPin(160)
                  }
 
         return pinHash
 
     def initCommands(self):
+        """
+        Initialize a list of valid system commands
+        :return:
+        """
         self._sysCommands = {'system shutdown': self.systemShutdown,
                                 'system restart': self.systemRestart,
                                 'recall': self._watchdog.recall,
                                 'stream open': self._stream.open,
                                 'stream close': self._stream.close,
-                                'reset arduino': self.resetArduino,
+                                'reset arduino': self._arduino.resetArduino,
                                 'motors off': self._pinHash['motorRelay'].toggleOn ,
                                 'lasers off': self._pinHash['laserRelay'].toggleOn,
                                 'led off': self._pinHash['ledRelay'].toggleOn,
@@ -96,8 +106,8 @@ class Jetson(object):
         else:
             controlCode = self._q.get()
         myCodeInput = self.recieveInput(controlCode)
-
-
+        
+        return controlCode
 
     def recieveInput(self, controlCode):
         """
@@ -105,11 +115,12 @@ class Jetson(object):
         :param controlCode:
         :return: Return specialized command object
         """
-        logging.info("Control code: " + controlCode)
+        logger.info("Control code: " + controlCode)
 
         if controlCode in self._motor._motorCodes:
             return self._motor.issue(controlCode, self._arduino)
         elif "forward" in controlCode or "backward" in controlCode or "brake" in controlCode:
+            print 'motor operand'
             return self._motor.movement(controlCode)
         elif "brightness" in controlCode:
             return self._led.issue(self._arduino, controlCode)
@@ -120,34 +131,43 @@ class Jetson(object):
         elif 'graph' in controlCode:
             self.graph(controlCode)
         else:
-            return logging.info("Invalid control code. Check documentation for command syntax.")
+            return logger.warning("Invalid control code. Check documentation for command syntax.")
 
-
+    def inputLoop(self):
+        """
+        Runs a loop over the safeInput function, checks self._exit to determine
+        whether or not it should hop out of the loop
+        """
+        while self._exit == False:
+            self.safeInput()
 
     def statisticsController(self):
         """
-        The loop for gathering, displaying, and saving data.
+        The controller for generating(Reading) data, checking it for errors and saving it.
         :return:
         """
 
-        logging.debug("Generating Statistics...")
         statistics = self._mars.generateStatistics()
 
-        #inject statistics updates
-        statistics.update(self._valmar.updateTelemetry())
-        statistics.update(self._watchdog.watch(statistics))
-        logging.debug("Displaying Statistics...")
-        logging.info(self.displayStatistics(self._mars._statistics))
-        logging.debug("Saving statistics...")
-        self.saveStats(self._mars._statistics)
+        if statistics is not None:
+            #inject statistics updates
+            statistics.update(self._valmar.updateTelemetry())
+            statistics.update(self._watchdog.watch(statistics))
+            telemetryLogger.info(self.displayStatistics(self._mars._statistics))
+            self.saveStats(self._mars._statistics)
 
-        #Set the integ time to the time of the last read for calculations
-        self._mars._integTime = time.time()
+            #Set the integ time to the time of the last read for calculations
+            self._mars._integTime = time.time()
+        else:
+            i = 0
+            while self._arduino._init is False and i < 5:
+                time.sleep(5)
+                i += 1
 
 
     def displayStatistics(self, data):
         """
-        Takes the data created by Mars and prints it, human readable.
+        Transforms the data into a more readable output for logger
         :param data:
         :return:
         """
@@ -174,119 +194,120 @@ class Jetson(object):
                 rawWriter.writerow(data)
 
         except Exception as e:
-            logging.info("unable to log data because: \r\n {}".format(e))
-
-    def initThreads(self):
-        self._inputT = InputThread(self)
-        self._statsT = StatisticsThread(self)
+            logger.warning("unable to log data because: \r\n {}".format(e))
 
     def manageThreads(self, toggle):
             """
-            This method starts the two threads that will run for the duration of the program. One scanning for input,
+            This method manages the two threads that will run for the duration of the program. One scanning for input,
             the other generating, displaying, and saving data.
             :return:
             """
-
             if (toggle == 'start'):
-                logging.info("Attempting to start threads")
+                logger.info("Attempting to start threads")
 
                 try:
-
-                    self._inputT.start()
                     self._statsT.start()
                 except Exception as e:
-                    logging.WARNING("error starting threads ({})".format(e))
-                    logging.WARNING("program will terminate")
-                    sys.exit()
+                    logger.error("error starting threads ({})".format(e))
             elif (toggle == 'stop'):
-                logging.info("Attempting to stop threads")
+                logger.info("Attempting to stop threads")
 
                 try:
-                    self._inputT.stop()
                     self._statsT.stop()
                 except Exception as e:
-                    logging.WARNING("error stopping threads ({})".format(e))
-                    logging.WARNING("program will terminate")
-                    sys.exit()
+                    logger.error("error stopping threads ({})".format(e))
 
 
     def systemRestart(self):
-        logging.info("initiating safe restart")
-        logging.info("shutting down arduino")
+        """
+        Restart the entire system, arduino included
+        :return:
+        """
+        logger.warning("initiating safe restart")
+        logger.warning ("shutting down arduino")
         self._arduino.powerOff()
         ### add functionality to cut power to motor controller
-        logging.info("restarting this computer")
-        logging.info("this connection will be lost")
+        logger.warning("restarting this computer")
+        logger.warning("this connection will be lost")
         time.sleep(1)
         subprocess.call(['sudo reboot'], shell=True)
 
 
     def systemShutdown(self):
-        logging.info("initiating safe shutdown")
+        """
+        Shutdown the system
+        :return:
+        """
+        logger.info("initiating safe shutdown")
         ### add functionality to cut power to motor controller
-        logging.info("shutting downn this computer")
-        logging.info("this connection will be lost")
+        logger.info("shutting downn this computer")
+        logger.info("this connection will be lost")
         subprocess.call(['sudo poweroff'], shell=True)
 
     def start(self):
-        self._pinHash['motorRelay'].changeState(0)
-        logging.info("Motor relay started")
-        self._pinHash['ledRelay'].changeState(0)
-        logging.info("LED relay started")
-        self._pinHash['laserRelay'].changeState(0)
-        logging.info("Laser relay started")
+        """
+        Start command for the program. Start all the relays, the motor, stream, and threads
+        :return:
+        """
+        self._pinHash['motorRelay'].toggleOff()
+        logger.info("Motor relay started")
+        self._pinHash['ledRelay'].toggleOff()
+        logger.info("LED relay started")
+        self._pinHash['laserRelay'].toggleOff()
+        logger.info("Laser relay started")
 
-        logging.info("Starting motor...")
+        logger.info("Starting motor...")
         self._motor.start()
 
-        logging.info("Starting stream...")
+        logger.info("Starting stream...")
         self._stream.open()
 
-        logging.info("Starting threads...")
+        logger.info("Starting threads...")
         self.manageThreads('start')
-
-    def manual(self):
-        self._inputT.start()
-
+        
+        logger.info('Setting up input receiver (main thread)...')
+        self.inputLoop()
+            
     def exit(self):
-
-        logging.info("Stopping threads")
+        """
+        Exit command for stopping the program.
+        :return:
+        """
+        logger.info("Stopping threads")
         self.manageThreads('stop')
 
-        logging.info("Braking motor...")
+        logger.info("Braking motor...")
         self._motor.brake()
 
-        logging.info("Closing stream...")
+        logger.info("Closing stream...")
         self._sysCommands['stream close']()
 
-        logging.info(("Turning off LEDs..."))
+        logger.info(("Turning off LEDs..."))
         self._led.issue(self._arduino, "brightness 0")
 
-        self._pinHash['motorRelay'].changeState(1)
-        logging.info("Motor relay stopped")
-        self._pinHash['ledRelay'].changeState(1)
-        logging.info("LED relay stopped")
-        self._pinHash['laserRelay'].changeState(1)
-        logging.info("Laser relay stopped")
+        self._pinHash['motorRelay'].toggleOff()
+        logger.info("Motor Circuit turned off")
+        self._pinHash['ledRelay'].toggleOff()
+        logger.info("LED Circuit turned off")
+        self._pinHash['laserRelay'].toggleOff()
+        logger.info("Laser Circuit turned off")
 
-        self.manageThreads('stop')
-
-        sys.exit()
+        self._exit = True
 
 
     def hibernate(self):
-        self._pinHash['motorRelay'].changeState(1)
-        logging.info("Motor relay ended")
-        self._pinHash['ledRelay'].changeState(1)
-        logging.info("LED relay ended")
-        self._pinHash['laserRelay'].changeState(1)
-        logging.info("Laser relay ended")
+        """
+        TODO: Hibernate function for Jetson
+        :return:
+        """
+        self._pinHash['motorRelay'].toggleOff()
+        logger.info("Motor relay ended")
+        self._pinHash['ledRelay'].toggleOff()
+        logger.info("LED relay ended")
+        self._pinHash['laserRelay'].toggleOff()
+        logger.info("Laser relay ended")
         self._stream.close()
 
-    def resetArduino(self):
-        self._pinHash["resetArduino"].toggleOff()
-        time.sleep(.2)
-        self._pinHash["resetArduino"].toggleOn()
 
     def graph(self, graphCommand):
         #This is kinda hacky, but we want to keep mars independant of the server
@@ -294,7 +315,7 @@ class Jetson(object):
         #packets. To do this we would need to have mars have some 'knowledge' of 
         #the server. As I said, that's not preferred.
 
-        #My solution is to base64 encode the file, and send it via the logging
+        #My solution is to base64 encode the file, and send it via the logger
         #this simplifies the entire process, and keeps us from coupling
         graphCommand = graphCommand.split(' ')
         if len(graphCommand) > 1:
@@ -311,8 +332,8 @@ class Jetson(object):
     def logFile(self, fileIn):    
         with open(fileIn, 'rb') as f:
             nameLength = str(len(fileIn))
-            logging.info('<<<_file_record_>>>' + nameLength + '_' + fileIn + base64.b64encode(f.read()))
+            logger.info('<<<_file_record_>>>' + nameLength + '_' + fileIn + base64.b64encode(f.read()))
 
     def listLogs(self):
-        logging.info(self.graphUtil.get_all_outputs())
+        logger.info(self.graphUtil.get_all_outputs())
  

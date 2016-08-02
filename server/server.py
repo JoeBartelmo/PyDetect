@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../mars-controller')
+sys.path.insert(0, '../mars')
 import socket
 from validate import validate_json
 import logging, logging.handlers
@@ -10,16 +10,23 @@ from listener import ListenerThread
 
 #Manipulatable Variables
 marsPort = 1337
-logPort = 1338
+debugLog = 1338
+telemLog = 1339
+
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('localhost', marsPort)
+server_address = ('127.0.0.1', marsPort)
 sock.bind(server_address)
 sock.listen(1)
 q = Queue()
 
-rootLogger = logging.getLogger()
-rootLogger.setLevel(logging.INFO)
+def wireLogToPort(name, port):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    socketHandler = logging.handlers.SocketHandler('127.0.0.1', port)
+    logger.addHandler(socketHandler)
+    logger.debug('complete handshake')
+    return logger
 
 try:
     while True:
@@ -27,25 +34,26 @@ try:
         connection, client_address = sock.accept()
         try:
             print >>sys.stderr, 'connection from', client_address
-            socketHandler = logging.handlers.SocketHandler('127.0.0.1', logPort)
-            rootLogger.addHandler(socketHandler)
-            logging.info('handshake complete')
+            log = wireLogToPort('mars_logging', debugLog)
+            wireLogToPort('telemetry_logging', telemLog)
             data = connection.recv(4096)
             print >>sys.stderr, 'received "%s"' % data
             if data is not None:
                 if validate_json(data):
-                    logging.info('Data verified as valid config, starting up Mars!')
+                    log.info('Data verified as valid config, starting up Mars!')
                     thread = ListenerThread(q, connection)
                     thread.start()
                     #all output from mars gets pipped to the rootLogger
                     #all input from connection is received through the listender, and piped through a queue to mars
-                    Mars.run(data, q)
+                    Mars.run(data, q, True)
                     #if we are here then mars' exit command was called
                     print 'Closing connection with ', client_address, ' and stopping all communication'
                     thread.stop()
                     connection.close()
         finally:
             connection.close()
+except KeyboardInterrupt:
+    sock.close()
 finally:
     sock.close()
 
