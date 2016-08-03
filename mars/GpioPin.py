@@ -27,8 +27,7 @@ create 8 pin objects:
 
 """
 
-
-
+logger = logging.getLogger('mars_logging')
 gpio_list = [57,160,161,162,163,164,165,166]
 
 class GpioPin(object):
@@ -42,11 +41,9 @@ class GpioPin(object):
 
         if gpioPin in gpio_list:
             self._gpioPin = gpioPin
-            #self.setup()
-            self.toggleOn()
         else:
-            logging.warning("GPIO PIN SETUP FAILED\r\nGPIO pin {} does not exist".format(str(gpioPin)))
-            logging.warning("GPIO pin must be one of the following {}".format(str(gpio_list)))
+            logger.warning("GPIO PIN SETUP FAILED\r\nGPIO pin {} does not exist".format(str(gpioPin)))
+            logger.warning("GPIO pin must be one of the following {}".format(str(gpio_list)))
             raise ValueError("invalid GPIO pin number")
 
 
@@ -70,37 +67,26 @@ class GpioPin(object):
         :param state: The state of the pin provided by the user
         :return:
         """
+        logger.debug('Writing ' + str(state) + ' to pin ' + str(self._gpioPin))
         if self._direction == "out":
             with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
                 value_file.write(str(state))
         else:
-            raise ValueError("pin must be an output to change it's state")
+            logger.critical('Pin (' + self._gpioPin + ') must be an output to change its state')
 
         self._state = state
 
     def toggleOn(self):
         """
-        Toggle the GPIO pin on (0)
+        Toggle the GPIO pin on (1)
         :return:
         """
-        if self._direction == "out":
-            with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
-                value_file.write(str(1))
-        else:
-            raise ValueError("pin must be an output to change it's state")
+        self.changeState(1)
 
     def toggleOff(self):
         """
-        Toggle the GPIO pin off (1)
+        Toggle the GPIO pin off (0)
         :return:
         """
-        if self._direction == "out":
-            with open('/sys/class/gpio/gpio{}/value'.format(str(self._gpioPin)),'w') as value_file:
-                value_file.write(str(0))
-        else:
-            raise ValueError("pin must be an output to change it's state")
-
-
-
-
+        self.changeState(0)
 

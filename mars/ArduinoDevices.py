@@ -1,5 +1,6 @@
 import logging
 
+logger = logging.getLogger('mars_logging')
 
 class LED(object):
     """
@@ -19,11 +20,11 @@ class LED(object):
         :return:
         """
         self._arduino = arduino
+        splitCode = controlCode.split(' ')
 
-        if "brightness" in controlCode:
-            if RepresentsInt(controlCode[11]):
-                self._brightness = controlCode[11]
-                self.write()
+        if len(splitCode) == 2 and 'brightness' == splitCode[0] and RepresentsInt(controlCode[1]):
+            self._brightness = controlCode[1] 
+            self.write()
 
     def write(self):
         """
@@ -70,26 +71,21 @@ class Motor(object):
         """
 
         if self._enabled == 0:
-            return logging.info("Motor must be enabled before you can move! Use: enable motor")
+            return logger.info("Motor must be enabled before you can move! Use: enable motor")
         if self._brake == 1:
-            return logging.info("Brake must be disabled to move! Use: disable break")
+            return logger.info("Brake must be disabled to move! Use: disable brak")
+        
+        splitCodes = myCode.split(' ')
 
-        if "forward" in myCode:
-            if RepresentsInt(myCode[8]):
-                self._enabled = 1
-                self._direction = 1
-                self._speed = myCode[8]
-                self.write()
-        elif "backward" in myCode:
-            if RepresentsInt(myCode[8]):
-                self._enabled = 1
-                self._direction = 0
-                self._speed = myCode[9]
-                self.write()
-        elif "brake" in myCode:
+        if len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
+            self._enabled = 1
+            self._direction = 1 if 'forward' == splitCodes[0] else 0
+            self._speed = splitCodes[1]
+            self.write()
+        elif "brake" == splitCodes[0]:
             self.brake()
         else:
-            return logging.info("Speed must be 0-9. Direction must be forward or backward.")
+            return logger.warning("Speed must be 0-9. Direction must be forward or backward.")
 
     def toggleMotor(self, myCode):
         """
@@ -127,7 +123,7 @@ class Motor(object):
         self._brake = 1
         self._speed = 0
 
-        logging.info("motor ready for commands")
+        logger.info("motor ready for commands")
 
         self.write()
 
@@ -137,7 +133,7 @@ class Motor(object):
         :return:
         """
         self._arduino.write("M0010")
-        logging.warning("Brake engaged")
+        logger.warning("Brake engaged")
 
     def write(self):
         """
@@ -145,7 +141,7 @@ class Motor(object):
         :return:
         """
         command = 'M' + str(self._enabled) + str(self._direction) + str(self._brake) + str(self._speed)
-        logging.info(command)
+        logger.info('Writing the following command to the Arduino: ' + command)
         self._lastCommand = command
         self._arduino.write(command)
 

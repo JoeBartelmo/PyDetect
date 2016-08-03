@@ -64,6 +64,20 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+#Stupid PyCharm
+.idea/
+
+#generated outputs
+do-not-delete-manually.hyperloop
+mars/output/
+mars/*.swp
+nohup.out
+maven/node_modules/
+*.mp4
+
+# gedit temp files
+*~
+
 #Webstorm
 .idea/
 '.idea' 

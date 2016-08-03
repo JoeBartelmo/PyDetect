@@ -2,6 +2,8 @@ import logging
 import time
 import subprocess
 
+logger = logging.getLogger('mars_logger')
+
 class Watchdog(object):
     def __init__(self, config, arduino, mars, pinHash):
         self._config = config
@@ -15,7 +17,7 @@ class Watchdog(object):
         self._lastConnection = time.time()
 
         self._shouldBrake = 0
-        self._loggingTime = 0
+        self._loggerTime = 0
 
         self._shouldDisplay = {"underVoltage":True,
                                "overVoltage":True,
@@ -31,20 +33,23 @@ class Watchdog(object):
 
 
     def systemShutdown(self):
-        logging.info("initiating safe shutdown")
+        logger.info("initiating safe shutdown")
         ### add functionality to cut power to motor controller
-        logging.info("shutting downn this computer")
-        logging.info("this connection will be lost")
+        logger.info("shutting downn this computer")
+        logger.info("this connection will be lost")
+        self._pinHash['motorRelay'].toggleOff()
+        self._pinHash['laserRelay'].toggleOff()
+        self._pinHash['ledRelay'].toggleOff()       
         subprocess.call(['sudo poweroff'], shell=True)
 
     def watch(self, telemetry):
         self.sniff(telemetry)
 
         if self._enableWatchdog == True:
-            waitTime = time.time() - self._loggingTime
+            waitTime = time.time() - self._loggerTime
             if waitTime > self._displayLogTimeout:
                 self._shouldDisplay = self._shouldDisplay.fromkeys(self._shouldDisplay.iterkeys(), True)
-                self._loggingTime = time.time()
+                self._loggerTime = time.time()
             self.bark()
         return self._electricStats
 
@@ -54,8 +59,6 @@ class Watchdog(object):
         sysI = telemetry['SystemCurrent']
         sensorDistance = telemetry['SensorDistance']
         connectionStatus = telemetry['ConnectionStatus']
-        logging.info(sysV)
-        logging.info(sysI)
         self.sniffOverCurrent(sysI)
         self.sniffOverVoltage(sysV)
         self.sniffUnderVoltage(sysV)
@@ -136,16 +139,16 @@ class Watchdog(object):
         if value in (1, 2, 3):
             self._pinHash['batteryLED'].toggleOn()
             if display == True:
-                logging.critical("battery level at warning level" + str(value))
+                logger.critical("battery level at warning level" + str(value))
 
         if value == 3:
-           logging.critical("recommend initiating recall")
+           logger.critical("recommend initiating recall")
 
         elif value == 2:
-            logging.critical("recommend ending run soon")
+            logger.critical("recommend ending run soon")
 
         elif value == 1:
-            logging.warning("battery level at warning level 1")
+            logger.warning("battery level at warning level 1")
 
 
     def barkAtOverCurrent(self):
@@ -155,13 +158,13 @@ class Watchdog(object):
         if value in (1, 2, 3):
             self._pinHash['warningLED'].toggleOn()
             if display == True:
-                logging.critical("overCurrent at warning level " + str(value))
+                logger.critical("overCurrent at warning level " + str(value))
 
         if value == 2:
-            logging.critical("current draw is much higher than expected")
+            logger.critical("current draw is much higher than expected")
 
         elif value == 3:
-            logging.critical("too much current detected! Recommend SHUTDOWN")
+            logger.critical("too much current detected! Recommend SHUTDOWN")
 
     def barkAtUnderVoltage(self):
         value = self._electricStats['underVoltageLevel']
@@ -169,18 +172,18 @@ class Watchdog(object):
             self._pinHash['warningLED'].toggleOn()
             self._pinHash['batteryLED'].toggleOn()
             if self._shouldDisplay["underVoltage"] == True:
-                logging.critical("underVoltage warning at level " + str(value))
+                logger.critical("underVoltage warning at level " + str(value))
                 self._shouldDisplay['underVoltage'] = False
 
         if value == 3:
-            logging.critical("initiating emergency shutdown")
+            logger.critical("initiating emergency shutdown")
             self.systemShutdown()
 
         elif value == 2:
-            logging.critical('battery may be near death!')
+            logger.critical('battery may be near death!')
 
         elif value == 1:
-            logging.warning("battery may be close to dying, please check")
+            logger.warning("battery may be close to dying, please check")
 
 
 
@@ -196,46 +199,42 @@ class Watchdog(object):
             self._pinHash['relay4'].toggleOff()
 
             if self._shouldDisplay['overVoltage'] == True:
-                logging.critical("overVoltage warning at level 3")
-                logging.critical("motor, LEDs, and laser circuits turned off")
-                logging.critical("recommend disabling watchdog and recalling mars")
+                logger.critical("overVoltage warning at level 3")
+                logger.critical("motor, LEDs, and laser circuits turned off")
+                logger.critical("recommend disabling watchdog and recalling mars")
         elif value == 2:
             self.recall()
             self._pinHash['warningLED'].toggleOn()
             if self._shouldDisplay['overVoltage'] == True:
-                logging.critical("overVoltage at warning level 2")
-                logging.critical("recommend enabling a recall")
+                logger.critical("overVoltage at warning level 2")
+                logger.critical("recommend enabling a recall")
         elif value == 1:
             self._pinHash['warningLED'].toggleOn()
             if self._shouldDisplay['overVoltage'] == True:
-                logging.warning("overVoltage at warning level 1")
-                logging.warning("recommend checking power supply")
-
+                logger.warning("overVoltage at warning level 1")
+                logger.warning("recommend checking power supply")
 
     def barkAtConnection(self):
         if self._connectionDownTime >= self._levels.connection_timeout:
             self.recall()
 
-
     def recall(self):
         # tell mars to head backwards toward operator
         self._arduino.write(self._levels.recall_code)
-        logging.critical("recall initiated")
-        logging.critical("type 'watchdog off' to resume control")
-
+        logger.critical("recall initiated")
+        logger.critical("type 'watchdog off' to resume control")
 
     def disable(self):
         if self._enableWatchdog == False:
-            logging.warning("watchdog is already disabled")
+            logger.warning("watchdog is already disabled")
         else:
             self._enableWatchdog = True
-            logging.critical("watchdog disabled")
-
+            logger.critical("watchdog disabled")
 
     def enable(self):
         if self._enableWatchdog == True:
-            logging.warning("watchdog is already enabled")
+            logger.warning("watchdog is already enabled")
         else:
             self._enableWatchdog = True
-            logging.critical("watchdog enabled")
+            logger.critical("watchdog enabled")
 

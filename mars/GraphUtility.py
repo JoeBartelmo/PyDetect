@@ -5,6 +5,8 @@ import os
 import fnmatch
 import logging
 
+logger = logging.getLogger('mars_logger')
+
 class GraphUtility(object):
 
     def __init__(self, config):
@@ -12,7 +14,7 @@ class GraphUtility(object):
 
     def get_all_outputs(self):
         if not os.path.exists(self.output_path):
-            logging.warning('output folder does not exist, cannot get outputs')
+            logger.warning('output folder does not exist, cannot get outputs')
             return []
         mtime = lambda f: os.stat(os.path.join(self.output_path, f)).st_mtime
         return list(sorted(os.listdir(self.output_path), key=mtime))
@@ -31,7 +33,7 @@ class GraphUtility(object):
         if filename is None:
             log.warning('Could not find a *.csv file in ' + inputFolder)
             return
-        logging.info(filename)  
+        logger.info(filename)  
         with PdfPages('telemetry_graphs.pdf') as pdf:
 
             out = pdf.infodict()

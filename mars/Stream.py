@@ -1,6 +1,8 @@
 import logging
 import subprocess
 
+logger = logging.getLogger('mars_logging')
+
 class Stream (object):
 
     def __init__(self, config, timestamp):
@@ -21,10 +23,10 @@ class Stream (object):
         """
         if (self._init):
             self.close()
-        logging.info('re-initializing steam with new inputs')
+        logger.info('re-initializing steam with new inputs')
         newCall = 'nohup' + ' node '+ self._indexPath + ' -w '  + self._resolution[0] + ' -h ' + self._resolution[1] + ' -b ' \
-                  + str(self._bitrate) + ' -f ' + self._logPath + ' &'
-        logging.info(newCall)
+                  + str(self._bitrate) + ' -f ' + self._logPath + ' >/dev/null 2>&1 &'
+        logger.info(newCall)
 
         subprocess.call([newCall], shell=True)
 
@@ -42,13 +44,13 @@ class Stream (object):
         #update res 640x480
         if myCode == 'low res stream':
 
-            logging.info('re-initializing steam with new inputs')
+            logger.info('re-initializing steam with new inputs')
             self._resolution = ['640', '480']
 
         #update res 1280x960
         elif myCode == 'high res stream':
 
-            logging.info('re-initializing steam with new inputs')
+            logger.info('re-initializing steam with new inputs')
             self._resolution = ['1280', '960']
 
         #Refresh stream
@@ -72,12 +74,12 @@ class Stream (object):
         :return:
         """
         if (self._init):
-            logging.info('closing stream')
+            logger.info('closing stream')
             subprocess.call(["node " + self._indexPath + " --close"], shell=True)
             self._init = False
         else:
             print("Stream not running")
-            logging.info("Stream not running")
+            logger.info("Stream not running")
 
 def RepresentsInt(s):
     try:

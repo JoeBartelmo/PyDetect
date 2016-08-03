@@ -34,7 +34,7 @@ function generateVLCStreamCommands(options, cameras) {
         cli.info(cameraInfo.name + ' recognized with serial ' + cameraInfo.id + '.\n\tOpened on Port: ' + (parseInt(options.port) + cameraInfo.port_increment));
         var cmd = "cvlc "+ (options.verbose ? '-vvv' : '');
             cmd += "v4l2://"+camera+":width="+options.width+":height="+options.height+":fps="+options.fps + ' --live-caching 200 ';
-            cmd += "--sout '#transcode{vcodec=h264,venc=x264{preset=ultrafast}vb="+options.bitrate;
+            cmd += "--sout '#transcode{vcodec=hv32,venc=x264{preset=ultrafast}vb="+options.bitrate;
             cmd += ",acodec=none}:duplicate{dst=file{dst=" + options.filename + '-' + cameraInfo.name.replace(/ /g, '') + ".mp4},dst=rtp{sdp=rtsp://:";
             cmd += (parseInt(options.port)+cameraInfo.port_increment)+"/}}'";
         cli.info(cmd)
@@ -50,6 +50,7 @@ function generateVLCStreamCommands(options, cameras) {
   return q.all(vlcCommands);
 }
 
+//We don't use pkill here to avoid killing processess that aren't ours
 function killPID(pid) {
   if(pid.length > 0) {
     var command = 'kill ' + pid;

@@ -7,6 +7,8 @@ import time
 import logging
 import sys
 
+logger = logging.getLogger('mars_logging')
+
 class Mars(object):
     """
     Mars is in control of pulling data from the arduino and generating relevant telemetry telemetry. This includes
@@ -40,7 +42,15 @@ class Mars(object):
         :return:
         """
 
-        serialData = self._arduino.serial_readline().rstrip()
+        serialData = None
+        if self._arduino._init == True:
+            serialData = self._arduino.serial_readline()
+        #returns none on error as well
+        if serialData is None:
+            logger.warning('Could not retrieve data from arduino')
+            return None
+        else:
+            serialData = serialData.strip().replace('\0','')
         rawArray = re.split(",", serialData)
 
         while(len(rawArray) < 4):
@@ -51,11 +61,10 @@ class Mars(object):
         currentTime = time.time()
         self._integTime = currentTime - copy
 
-        logging.info("Integration time:" + str(self._integTime))
+        logger.debug("Integration time:" + str(round(self._integTime, 4)) + ':\t'  + str(rawArray))
         self._telemetry['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
         self._telemetry['ConnectionStatus'] = self.checkConnection()
 
-        logging.info(rawArray)
         rpm = rawArray[0]
         self._telemetry['RPM'] = float(rpm)
         sysV = rawArray[1]

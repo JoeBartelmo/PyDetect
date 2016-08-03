@@ -4,9 +4,9 @@
     "current_battery": 192.0
   },
   "logging": {
-    "index_path":"/home/ubuntu/PyDetect/serverSide-stream/index.js",
+    "index_path":"/home/ubuntu/PyDetect/maven/index.js",
     "output_path":"/home/ubuntu/PyDetect/mars",
-    "connection_path":"/home/ubuntu/PyDetect/server/connection"
+    "connection_path":"/home/ubuntu/PyDetect/mars/connection"
   },
   "conversions": {
     "code_to_rpm" : 111.1,
