@@ -13,11 +13,11 @@ class ControlWidget(tk.Frame):
         client_queue_out: transfers commands back to the controller
 
     """
-    def __init__(self, parent, client_queue_out):
+    def __init__(self, parent, client_queue_cmd, client_queue_log):
         tk.Frame.__init__(self, parent, bd=2, relief='groove')
         self.parent = parent
 
-        self.cmd_queue = client_queue_out
+        self.cmd_queue = client_queue_cmd
 
         self.init_ui()
 

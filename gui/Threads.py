@@ -40,6 +40,18 @@ class VideoThread(threading.Thread):
             __ = self._queue.get()
             self._queue.task_done()
 
+    def get_ideal_images(self):
+        self.ideal_pump = []
+
+        for s in self.streams:
+            if s._vidcap.isOpened():
+                flag, frame = s._vidcap.read()
+                if not flag:
+                    continue
+                ideal_keypoint = self.fast.detect(frame, None)
+                self.ideal_pump.append(stealth_pumpkin(frame, ideal_keypoint))
+
+
     def stop(self):
         self._stop.set()
    
@@ -74,8 +86,7 @@ class TelemetryThread(threading.Thread):
                 self._widget.update()
 
             elif item:
-                self._widgets.parent.command_w.log(item)   # TODO change to depickle 
-        print 'Killing Telemetry Thread'
+                self._widgets.parent.command_w.log(item)   # TODO change to depickle or de-json
 
     def stop(self):
         self._stop.set()

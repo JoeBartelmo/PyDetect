@@ -20,7 +20,7 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
     root.protocol("WM_DELETE_WINDOW", m.close_)
 
     # menu
-    menu_ = TopMenu(root, 'config.json', client_queue_cmd)
+    menu_ = TopMenu(root, 'operations.json', client_queue_cmd, 'Commands')
     root.config(menu=menu_)
 
     # title and icon
@@ -28,16 +28,21 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
     img = tk.PhotoImage(os.path.join(os.getcwd(), 'assets/rit_imaging_team.png'))
     root.tk.call('wm', 'iconphoto', root._w, img)
 
+    root.update()
+    print root.winfo_height(), root.winfo_width()
+
     # run forever
     root.mainloop()
 
 if __name__=='__main__':
     from Queue import Queue
 
-    in_queue = Queue()
-    out_queue = Queue()
+    cmd_queue = Queue()
+    log_queue = Queue()
+    telem_queue = Queue()
     server_ip = 'hyperlooptk1.student.rit.edu'
 
-    start(in_queue, out_queue, server_ip)
+    start(cmd_queue, log_queue, telem_queue, server_ip)
 
-    
+    while not cmd_queue.empty():
+        print cmd_queue.get()    

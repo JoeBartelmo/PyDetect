@@ -3,19 +3,18 @@ import json
 import copy
 
 class TopMenu(tk.Menu):
-    def __init__(self, parent, config_file, queue):
+    def __init__(self, parent, config_file, queue, name):
         tk.Menu.__init__(self, parent)
         self.client_queue_in = queue
 
-        self.init_ui(config_file)
+        self.init_ui(config_file, name)
 
-   
-    def init_ui(self, config_file):
+    def init_ui(self, config_file, name):
         commands_config = self.load_commands(config_file)
 
         command_menu = tk.Menu(self, tearoff=0)
         for key, val in commands_config.iteritems():
-            print key, val
+            
             copyval = '%s' % val['command']
             if val['options'] is None:
                 
@@ -28,7 +27,7 @@ class TopMenu(tk.Menu):
                     options.add_command(label=opt, command=self.commandFunc(copyval, opt))
                 command_menu.add_cascade(label=key, menu=options)
 
-        self.add_cascade(label='Commands', menu=command_menu)
+        self.add_cascade(label=name, menu=command_menu)
 
     def commandFunc(self, cmd, option=False):
         if option == False:
@@ -37,7 +36,7 @@ class TopMenu(tk.Menu):
             command = cmd + ' ' + option
         
         def f():
-            print id(cmd)
+            #print id(cmd)  # here from debugging
             self.client_queue_in.put(command)
         return f
     
