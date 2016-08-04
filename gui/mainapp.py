@@ -1,11 +1,11 @@
 import cv2
 from PIL import Image, ImageTk
 import numpy
-import Tkinter as tk
-from Threads import VideoThread
 from Queue import Queue, Empty
 import time
+import Tkinter as tk
 
+from Threads import VideoThread
 from TelemetryWidget import TelemetryWidget
 from ControlWidget import ControlWidget
 from img_proc.misc import demosaic
@@ -17,6 +17,8 @@ class MainApplication(tk.Frame):
         self.stream_order = [0,1,2]
 
         self.init_ui(client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
+
+        self.fast = cv2.FastFeatureDetector()
         
         self.start_streams()
         self.start_telemetry()
@@ -47,27 +49,45 @@ class MainApplication(tk.Frame):
 
         # telemetry display widget
         self.telemetry_w = TelemetryWidget(self, client_queue_telem)
-        self.telemetry_w.grid(row=0, column=1, padx=5, pady=5, sticky='nw')
+        self.telemetry_w.grid(row=0, column=1, padx=5, pady=5, sticky='nesw')
 
         # valmar control and logging widget
         self.command_w = ControlWidget(self, client_queue_cmd, client_queue_log)
         self.command_w.grid(row=1, column=1, rowspan=2, padx=5, pady=5, sticky='nw')
 
         # radiobuttons for choosing which stream is in focus
-        buttons = ['Left', 'Center', 'Right']
-
         frame = tk.Frame(self, bd=2, relief='groove')
-        col = 0
         self.stream_active = tk.IntVar()
         self.stream_active.set(0)
-        for text in buttons:
-            b = tk.Radiobutton(frame, text=text, variable=self.stream_active, value=col,\
-                         command=self.choose_focus)
-            b.grid(row=0, column=col, padx=5, pady=5)
-            col += 1
+        self.pump = tk.IntVar()
+        
+        tk.Radiobutton(frame, text='Left', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=0, padx=5, pady=5)
+        tk.Radiobutton(frame, text='Center', variable=self.stream_active, value=1, command=self.choose_focus).grid(row=0, column=1, padx=5, pady=5)
+        tk.Radiobutton(frame, text='Right', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=2, padx=5, pady=5)
+        tk.Checkbutton(frame, text='Pumpkin', variable=self.pump).grid(row=0, column=4)
+
         frame.grid(row=1, column=0, sticky='s')
 
         self.grid()
+
+    def toggle_pumpkin(self, event):
+        if self.pump.get() == 1:
+            def transfromFunc(frame):
+                # do pumpkin processing
+
+                frame_kp = self.fast.detect(frame, None)
+                squash = stealth_pumpkin(frame, frame_kp)
+
+                pumpkins_indexes = sneaky_squash(ideal_image, squash)   # TODO fix ideal_image junk
+
+                return highlight.highlight(frame, pumpkins_indexes, color=(255,0,0))
+                
+            for idx, stream in enumerate(self.streams):
+                s.transform(transformFunc)
+
+        else:
+            for s in self.streams:
+                s.transform(None)
 
     def choose_focus(self):
         """ Change stream focus. """
@@ -138,12 +158,12 @@ class MainApplication(tk.Frame):
             if s._vidcap.isOpened():
                 s.start()
 
-        self.after(100, self.display_streams)
+        self.after(100, self.display_streams)   # TODO decide on appropriate interval
 
     def start_telemetry(self):
         """ after 5 seconds, start telemtry updates. """
         self.telemetry_w.tthread.start()
-        #self.after(5000, self.telemetry_w.persistent_update)   # TODO decide on appropriate interval
+        self.after(100, self.telemetry_w.run_telemetry)   # TODO decide on appropriate interval
 
     def close_(self):
         self.telemetry_w.quit_()
@@ -170,16 +190,5 @@ if __name__ == '__main__':
     # run forever
     root.mainloop()
 
-    """
-    stream = 'rtsp://129.21.56.100:8556/'
-
-    vid = cv2.VideoCapture(stream)
-
-    while vid.isOpened() is True:
-        fl, fr = vid.read()
-        if fl:
-            cv2.imshow(stream, fr)
-            cv2.waitKey(1)
-    """
 
 
