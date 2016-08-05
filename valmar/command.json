@@ -21,6 +21,6 @@
 	},
 	"calibration": {
 		"pixelRatio":5.0,
-
+                "ibeam_offset" : 0
 	}
 }
