@@ -1,26 +1,24 @@
 {
-	"command":{
-		"enable":true,
-		"runTest":false
-		},
-	"capture" : {
-		"framerate":100,
-		"exposure_us":100,
-		"gain":0,
-		"gamma_y": 0.47,
-		"sharpness":0
-	},
-
-	"system" : {
-		"image_queue_size" : 150
-	},
-
-	"processing" : {
-		"psnr_threshold": 5,
-		"num_frames_to_process" : 100
-	},
-	"calibration": {
-		"pixelRatio":5.0,
-
-	}
+    "command":{
+        "enabled": true
+    },
+    "capture" : {
+        "framerate": 100,
+        "exposure_us": 100,
+        "gain": 0,
+        "gamma_y": 0.47,
+        "sharpness":0
+    },
+    "system" : {
+        "image_queue_size" : 150
+    },
+    "processing" : {
+        "psnr_threshold": 5,
+        "num_frames_to_process" : 100
+    },
+    "calibration": {
+        "pixelRatio":5.0,
+        "ibeam_offset" : 0
+    }
 }
+

@@ -81,3 +81,7 @@ maven/node_modules/
 #Webstorm
 .idea/
 '.idea' 
+
+#C++
+*.o
+valmar/target

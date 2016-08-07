@@ -5,7 +5,7 @@ ark9719
 
 from GpioPin import GpioPin
 from Watchdog import Watchdog
-from Threads import StatisticsThread
+from Threads import TelemetryThread
 from Valmar import Valmar
 from GraphUtility import GraphUtility
 import logging
@@ -28,10 +28,10 @@ class Jetson(object):
     def __init__(self, devices, config, timestamp, q = None):
         self._devices = devices
 
-        self._pinHash = self.initPins()
+        self._pinHash = self._devices['pinHash']
         self._devices['Watchdog'] = Watchdog(config, self._devices['Arduino'], self._devices['Mars'], self._pinHash)
         self.initDevices()
-        self._statsT = StatisticsThread(self)
+        self._statsT = TelemetryThread(self)
         self.initCommands()
 
         self._exit = False
@@ -40,6 +40,8 @@ class Jetson(object):
         self._header = False
         self._q = q
         self.graphUtil = GraphUtility(config)
+
+        self._pauseTelemetry = False
 
     def initDevices(self):
         """
@@ -56,20 +58,6 @@ class Jetson(object):
         self._watchdog = self._devices['Watchdog']
         self._valmar = self._devices['Valmar']
 
-    def initPins(self):
-        """
-        Create 8 pin objects
-        """
-        pinHash = { 'connectionLED': GpioPin(166),
-                    'warningLED': GpioPin(164),
-                    'batteryLED': GpioPin(165),
-                    'motorRelay': GpioPin(163),
-                    'ledRelay': GpioPin(162),
-                    'laserRelay': GpioPin(161),
-                    'relay4': GpioPin(160)
-                 }
-
-        return pinHash
 
     def initCommands(self):
         """
@@ -81,15 +69,21 @@ class Jetson(object):
                                 'recall': self._watchdog.recall,
                                 'stream open': self._stream.open,
                                 'stream close': self._stream.close,
+                                'motor off': self._pinHash['motorRelay'].toggleOff,
+                                'motor on' : self._pinHash['motorRelay'].toggleOn,
+                                'laser off': self._pinHash['laserRelay'].toggleOff,
+                                'laser on' : self._pinHash['laserRelay'].toggleOn,
+                                'led off': self._pinHash['ledRelay'].toggleOff,
+                                'led on' : self._pinHash['ledRelay'].toggleOn,
                                 'reset arduino': self._arduino.resetArduino,
-                                'motors off': self._pinHash['motorRelay'].toggleOn ,
-                                'lasers off': self._pinHash['laserRelay'].toggleOn,
-                                'led off': self._pinHash['ledRelay'].toggleOn,
-                                'start statistics': self._statsT.start,
                                 'hibernate': self.hibernate,
                                 'start': self.start,
                                 'exit': self.exit,
-                                'list logs': self.listLogs
+                                'list logs': self.listLogs,
+                                'watchdog off': self._watchdog.disable,
+                                'watchdog on': self._watchdog.enable,
+                                'valmar off': self._valmar.disable,
+                                'valmar on': self._valmar.enable
                              }
 
 
@@ -141,22 +135,30 @@ class Jetson(object):
         while self._exit == False:
             self.safeInput()
 
-    def statisticsController(self):
+    def telemetryController(self):
         """
         The controller for generating(Reading) data, checking it for errors and saving it.
         :return:
         """
+        telemetry = None
 
-        statistics = self._mars.generateStatistics()
-
-        if statistics is not None:
-            #inject statistics updates
-            statistics.update(self._valmar.updateTelemetry())
-            statistics.update(self._watchdog.watch(statistics))
-            telemetryLogger.info(self.displayStatistics(self._mars._statistics))
-            self.saveStats(self._mars._statistics)
-
-            #Set the integ time to the time of the last read for calculations
+        if self._pauseTelemetry == False:
+            logger.debug("Generating Telemetry...")
+            telemetry = self._mars.generateTelemetry()
+    
+            if telemetry is not None:
+                #inject telemetry updates
+                telemetry.update(self._watchdog.watch(telemetry))
+                telemetry.update(self._valmar.updateTelemetry())
+                logger.debug("Displaying Telemetry...")
+                telemetryLogger.info(self.displayTelemetry(self._mars._telemetry))
+                logger.debug("Saving telemetry...")
+                self.saveStats(self._mars._telemetry)
+    
+                #Set the integ time to the time of the last read for calculations
+            else:
+                self._arduino.flushBuffers()
+                pass
             self._mars._integTime = time.time()
         else:
             i = 0
@@ -164,8 +166,7 @@ class Jetson(object):
                 time.sleep(5)
                 i += 1
 
-
-    def displayStatistics(self, data):
+    def displayTelemetry(self, data):
         """
         Transforms the data into a more readable output for logger
         :param data:
@@ -207,6 +208,7 @@ class Jetson(object):
 
                 try:
                     self._statsT.start()
+                    self.inputLoop()
                 except Exception as e:
                     logger.error("error starting threads ({})".format(e))
             elif (toggle == 'stop'):
@@ -250,11 +252,11 @@ class Jetson(object):
         :return:
         """
         self._pinHash['motorRelay'].toggleOff()
-        logger.info("Motor relay started")
+        logger.info("Motor circuit closed")
         self._pinHash['ledRelay'].toggleOff()
-        logger.info("LED relay started")
+        logger.info("LED circuit closed")
         self._pinHash['laserRelay'].toggleOff()
-        logger.info("Laser relay started")
+        logger.info("Laser circuit closed")
 
         logger.info("Starting motor...")
         self._motor.start()
@@ -264,10 +266,7 @@ class Jetson(object):
 
         logger.info("Starting threads...")
         self.manageThreads('start')
-        
-        logger.info('Setting up input receiver (main thread)...')
-        self.inputLoop()
-            
+
     def exit(self):
         """
         Exit command for stopping the program.
@@ -278,6 +277,7 @@ class Jetson(object):
 
         logger.info("Braking motor...")
         self._motor.brake()
+        time.sleep(2) #necessary to make sure Mars moves to a stop
 
         logger.info("Closing stream...")
         self._sysCommands['stream close']()
@@ -294,19 +294,44 @@ class Jetson(object):
 
         self._exit = True
 
-
     def hibernate(self):
         """
         TODO: Hibernate function for Jetson
         :return:
         """
         self._pinHash['motorRelay'].toggleOff()
-        logger.info("Motor relay ended")
+        logger.warning("Motor circuit opened")
         self._pinHash['ledRelay'].toggleOff()
-        logger.info("LED relay ended")
+        logger.warning("Led circuit opened")
         self._pinHash['laserRelay'].toggleOff()
-        logger.info("Laser relay ended")
+        logger.warning("Laser circuit opened")
         self._stream.close()
+        logger.warning("Closing video stream")
+        self._valmar.issueCommand("enable",False)
+        logger.warning("Pausing VALMAR gap measurement system")
+
+        self._pauseTelemetry = True
+        logger.warning("Pausing telemetry")
+
+        logger.warning("System hibernating")
+
+
+    def resume(self):
+        """
+        this method is meant to resume normal function after hibernation
+        :return:
+        """
+        self._pinHash['motorRelay'].toggleOn()
+        logging.info("Motor circuit closed")
+        self._pinHash['ledRelay'].toggleOn()
+        logging.info("LED circuit closed")
+        self._pinHash['laserRelay'].toggleOn()
+        logging.info("Laser circuit closed")
+
+        logging.info("All circuits closed and ready for use")
+
+        logging.info("Resuming stream...")
+        self._stream.open()
 
 
     def graph(self, graphCommand):

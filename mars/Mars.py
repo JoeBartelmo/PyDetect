@@ -11,33 +11,33 @@ logger = logging.getLogger('mars_logging')
 
 class Mars(object):
     """
-    Mars is in control of pulling data from the arduino and generating relevant telemetry statistics. This includes
+    Mars is in control of pulling data from the arduino and generating relevant telemetry telemetry. This includes
     stats on time, battery, distance, power, and more.
     """
 
-    def __init__(self, arduino, config, LED, Motor):
+    def __init__(self, arduino, config, LED, Motor, pinHash):
         self._arduino = arduino
         self._LED = LED
         self._Motor = Motor
-
+        self._pinHash = pinHash
 
         self._config = config
         self._integTime = time.time()
         self._currentBattery = self._config.constants.total_battery
         self._recallOverride = False
 
-        statistics = {}
-        self._statistics = statistics
-        statistics.setdefault('TotalDistance', 0)
-        statistics.setdefault('IntervalDistance', 0)
-        statistics.setdefault('IntervalDisplacement', 0)
-        statistics.setdefault('TotalDisplacement', 0)
-        statistics.setdefault('BatteryRemaining', self._config.user_input.current_battery)
+        telemetry = {}
+        self._telemetry = telemetry
+        telemetry.setdefault('TotalDistance', 0)
+        telemetry.setdefault('IntervalDistance', 0)
+        telemetry.setdefault('IntervalDisplacement', 0)
+        telemetry.setdefault('TotalDisplacement', 0)
+        telemetry.setdefault('BatteryRemaining', self._config.user_input.current_battery)
 
-    def generateStatistics(self):
+    def generateTelemetry(self):
         """
         Through raw data and the work of helper functions, this method populates a dictionary stored attribute of Mars,
-        statistics, with telemetry data.
+        telemetry, with telemetry data.
         :param integTime:
         :return:
         """
@@ -53,53 +53,52 @@ class Mars(object):
             serialData = serialData.strip().replace('\0','')
         rawArray = re.split(",", serialData)
 
-        while(len(rawArray) < 5):
+        while(len(rawArray) < 4):
             serialData = self._arduino.serial_readline().rstrip()
             rawArray = re.split(",", serialData)
         #Assign integ time for use of helper functions
         copy = self._integTime
-        currenttime = time.time()
-        self._integTime = currenttime - copy
+        currentTime = time.time()
+        self._integTime = currentTime - copy
 
-        logger.debug("Integ time:" + str(round(self._integTime, 4)) + ':\t'  + str(rawArray))
-        self._statistics['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
+        logger.debug("Integration time:" + str(round(self._integTime, 4)) + ':\t'  + str(rawArray))
+        self._telemetry['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
+        self._telemetry['ConnectionStatus'] = self.checkConnection()
 
         rpm = rawArray[0]
-        self._statistics['RPM'] = float(rpm)
+        self._telemetry['RPM'] = float(rpm)
         sysV = rawArray[1]
-        self._statistics['SystemVoltage'] = float(sysV)
+        self._telemetry['SystemVoltage'] = float(sysV)
         sysI = rawArray[2]
-        self._statistics['SystemCurrent'] = float(sysI)
-        frontDistance = rawArray[3]
-        self._statistics['FrontDistance'] = frontDistance
-
-        backDistance = rawArray[4]
-        if backDistance != 'out of range':
-            backDistance = backDistance[0:len(sysI)-4]
-        self._statistics['BackDistance'] = backDistance
+        self._telemetry['SystemCurrent'] = float(sysI)
+        sensorDistance = rawArray[3]
+        self._telemetry['SensorDistance'] = sensorDistance
 
         speed = self.estimatedSpeed() #speed in m/s
-        self._statistics['Speed'] = speed
+        self._telemetry['Speed'] = speed
         power = self.estimatedPower(sysV, sysI) #power in Watts
-        self._statistics['Power'] = power
+        self._telemetry['Power'] = power
 
 
         intDistance, totDistanceTraveled = self.distanceTraveled() #in Meters
-        self._statistics['IntervalDistance'] = intDistance
-        self._statistics['TotalDistance'] = totDistanceTraveled
+        intDistance, totDistanceTraveled = self.distanceTraveled() #in Meters
+        self._telemetry['IntervalDistance'] = intDistance
+        self._telemetry['TotalDistance'] = totDistanceTraveled
 
         displacement, totalDisplacement = self.displacement() #in Meters
-        self._statistics['IntervalDisplacement'] = displacement
-        self._statistics['TotalDisplacement'] = totalDisplacement
-
-        batteryRemaining = self.batteryRemaining(power)
-        self._statistics['BatteryRemaining'] = batteryRemaining
+        self._telemetry['IntervalDisplacement'] = displacement
+        self._telemetry['TotalDisplacement'] = totalDisplacement
+        self._telemetry['BatteryRemaining'] = self.batteryRemaining(power)
 
         #pulling in last commands
-        self._statistics['setSpeed'] = int(self._Motor._lastCommand[-1:]) * self._config.conversions.code_to_rpm
-        self._statistics['LEDBrightness'] = self._LED._lastCommand
+        self._telemetry['SetSpeed'] = int(self._Motor._lastCommand[-1:]) * self._config.conversions.code_to_rpm
+        self._telemetry['LEDBrightness'] = self._LED._lastCommand.replace('L','')
 
-        return self._statistics
+        #pulling in the state of relays
+        self._telemetry['MotorCircuit'] = self._pinHash['motorRelay']._state
+        self._telemetry['LedCircuit'] =  self._pinHash['ledRelay']._state
+        self._telemetry['LaserCircuit'] = self._pinHash['laserRelay']._state
+        return self._telemetry
 
     def estimatedSpeed(self):
         """
@@ -118,13 +117,13 @@ class Mars(object):
         :return:
         """
 
-        rpm = float(self._statistics['RPM']) #rpm must be a float
+        rpm = float(self._telemetry['RPM']) #rpm must be a float
         rpmToSpeed = self._config.conversions.rpm_to_speed
         estMps = rpm*rpmToSpeed #estimated SPEED in M/S
 
         returnEstMps = round(estMps, 1)
-        self._statistics['Speed'] = returnEstMps
-        return self._statistics['Speed']
+        self._telemetry['Speed'] = returnEstMps
+        return self._telemetry['Speed']
 
     def estimatedPower(self, sysVoltage, sysCurrent):
         """
@@ -134,8 +133,8 @@ class Mars(object):
         :param sysCurrent:
         :return:
         """
-        sysVoltage = float(self._statistics['SystemVoltage'])
-        sysCurrent = float(self._statistics['SystemCurrent'])
+        sysVoltage = float(self._telemetry['SystemVoltage'])
+        sysCurrent = float(self._telemetry['SystemCurrent'])
         estPower = sysVoltage * sysCurrent
 
         powerReturned = round(estPower, 2)
@@ -153,13 +152,13 @@ class Mars(object):
         if time == None:
             time = self._integTime
 
-        intervalDistance = abs(self._statistics['Speed']) * time
-        travAdded = self._statistics['TotalDistance'] + intervalDistance
-        self._statistics['TotalDistance'] = travAdded
-        #totalDistance = self._statistics['distanceTraveled']
+        intervalDistance = abs(self._telemetry['Speed']) * time
+        travAdded = self._telemetry['TotalDistance'] + intervalDistance
+        self._telemetry['TotalDistance'] = travAdded
+        #totalDistance = self._telemetry['distanceTraveled']
 
         intervalDistanceRounded = round(intervalDistance,1)
-        totalDistanceRounded = round(self._statistics['TotalDistance'], 1)
+        totalDistanceRounded = round(self._telemetry['TotalDistance'], 1)
 
         return intervalDistanceRounded,totalDistanceRounded
 
@@ -173,10 +172,10 @@ class Mars(object):
         if time == None:
             time = self._integTime
 
-        intervalDisplacement = self._statistics['Speed'] * time
-        self._statistics['IntervalDisplacement'] = self._statistics['IntervalDisplacement'] + intervalDisplacement
+        intervalDisplacement = self._telemetry['Speed'] * time
+        self._telemetry['IntervalDisplacement'] = self._telemetry['IntervalDisplacement'] + intervalDisplacement
             # '--> updating the object attribute
-        totalDisplacement = self._statistics['TotalDisplacement'] + intervalDisplacement
+        totalDisplacement = self._telemetry['TotalDisplacement'] + intervalDisplacement
 
         intervalDisplacement = round(intervalDisplacement,1) #Rounding for readability
         totalDisplacement = round(totalDisplacement, 1)
@@ -215,4 +214,9 @@ class Mars(object):
         battPercentReturned = round(battPercent, 1)
 
         return battPercentReturned
+
+    def checkConnection(self):
+        with open(self._config.logging.connection_path,'r') as connectionFile:
+            connectionStatus = True if connectionFile.read() == "1" else False
+        return connectionStatus
 

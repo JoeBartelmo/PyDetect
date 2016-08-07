@@ -78,6 +78,7 @@ class Motor(object):
         splitCodes = myCode.split(' ')
 
         if len(splitCodes) == 2 and RepresentsInt(splitCodes[1]):
+            self._enabled = 1
             self._direction = 1 if 'forward' == splitCodes[0] else 0
             self._speed = splitCodes[1]
             self.write()
@@ -120,7 +121,9 @@ class Motor(object):
         self._enabled = 0
         self._direction = 0
         self._brake = 1
-        self._speed = 0 
+        self._speed = 0
+
+        logger.info("motor ready for commands")
 
         self.write()
 
@@ -130,7 +133,7 @@ class Motor(object):
         :return:
         """
         self._arduino.write("M0010")
-        logger.info("Arduino braking...")
+        logger.warning("Brake engaged")
 
     def write(self):
         """

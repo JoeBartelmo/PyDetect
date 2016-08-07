@@ -5,7 +5,8 @@
   },
   "logging": {
     "index_path":"/home/ubuntu/PyDetect/maven/index.js",
-    "output_path":"/home/ubuntu/PyDetect/mars"
+    "output_path":"/home/ubuntu/PyDetect/mars",
+    "connection_path":"/home/ubuntu/PyDetect/mars/connection"
   },
   "conversions": {
     "code_to_rpm" : 111.1,
@@ -22,6 +23,7 @@
     "recall_code":"M1005",
     "display_log_timeout":10.0,
     "braking_distance":3.8,
+    "connection_timeout":30.0,
 
     "under_voltage_alert": 12.0,
     "under_voltage_warning": 11.0,

@@ -8,6 +8,6 @@ class DaqTelemetry
     double systemVoltage;//voltage coming off the batteries
     double systemCurrent;//system current
     double systemRpm;//computed rpm coming off the encoder
-    double frontDistance; //computed distance from the object in front
-    double backDistance; //computed distance from the object in back
+    double distance; //computed distance from the object in front
+
 };

@@ -13,7 +13,7 @@ class Valmar():
         self._mars = mars
 
 
-    def modifyCommandParameter(self, parameter, value):
+    def issueCommand(self, parameter, value):
         with open(self._commandPath),'r' as commandFile:
             self._commands = json.load(commandFile)
             self._commands[parameter] = value
@@ -27,3 +27,8 @@ class Valmar():
             self._telemetry = json.load(telemFile)
         return self._telemetry
 
+    def enable(self):
+        self.issueCommand("enable", True)
+
+    def disable(self):
+        self.issueCommand("enable",False)
