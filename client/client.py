@@ -5,8 +5,8 @@ from fileListener import FileListenerThread
 from listener import ListenerThread
 import logging
 from Queue import Queue
-sys.path.insert(0, '../gui')
 from ColorLogger import initializeLogger 
+sys.path.insert(0, '../gui')
 import gui
 
 marsPort = 1337
@@ -22,7 +22,7 @@ serverAddr = 'localhost'
 if len(sys.argv) == 1:
     serverAddr = sys.argv[0]
 logger = initializeLogger('./', logging.DEBUG, 'mars_logging', sout = True, colors = True)
-logger.info('Using server address:', serverAddr)
+logger.info('Using server address:' + serverAddr)
 
 #Queues responsible for communicating between GUI and this socket client
 guiTelemetryInput = Queue()
@@ -47,20 +47,24 @@ try:
     with open('config.json', 'r') as content_file:
         message = content_file.read().replace('\n','').replace(' ', '')
     sock.sendall(message)
-    
+   
+    #give a second or 2 for rtsp streams to start
+    #ideally we would wait until something is raised; time constraints
+    time.sleep(5)
+ 
     # start gui
-    #gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
+    gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
 
-    while True:
-        command = raw_input('\n')
-        sock.sendall(command)
-        if command == killCommand:
-            time.sleep(2)#lets all messages be displayed from listener
-            sock.close()
-            telemThread.stop()
-            debugThread.stop()
-            fileListenerThread.stop()
-            break
+    #while True:
+    #    command = raw_input('\n')
+    #    sock.sendall(command)
+    #    if command == killCommand:
+    #        time.sleep(2)#lets all messages be displayed from listener
+    #        sock.close()
+    #        telemThread.stop()
+    #        debugThread.stop()
+    #        fileListenerThread.stop()
+    #        break
     
 except KeyboardInterrupt:
     logger.warning('Closing socket')

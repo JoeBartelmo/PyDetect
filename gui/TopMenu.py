@@ -53,7 +53,7 @@ if __name__=='__main__':
     from Queue import Queue
     root = tk.Tk()
     q = Queue()
-    t = TopMenu(root, 'operations.json', q)
+    t = TopMenu(root, '../gui/operations.json', q)
     root.config(menu=t)
     #t.grid()
     root.update()

@@ -78,9 +78,6 @@ class TelemetryThread(threading.Thread):
             except Empty:
                 continue
 
-            if not telem:
-                continue
-            
             if type(item) == str:    # i.e. is a warning or error
                 self._widget.update_(item)
                 self._widget.update()

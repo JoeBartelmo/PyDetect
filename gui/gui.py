@@ -20,12 +20,12 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
     root.protocol("WM_DELETE_WINDOW", m.close_)
 
     # menu
-    menu_ = TopMenu(root, 'operations.json', client_queue_cmd, 'Commands')
+    menu_ = TopMenu(root, '../gui/operations.json', client_queue_cmd, 'Commands')
     root.config(menu=menu_)
 
     # title and icon
     root.wm_title('Hyperloop Imaging Team')
-    img = tk.PhotoImage(os.path.join(os.getcwd(), 'assets/rit_imaging_team.png'))
+    img = tk.PhotoImage(os.path.join(os.getcwd(), '../gui/assets/rit_imaging_team.png'))
     root.tk.call('wm', 'iconphoto', root._w, img)
 
     root.update()
