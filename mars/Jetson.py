@@ -335,29 +335,11 @@ class Jetson(object):
 
 
     def graph(self, graphCommand):
-        #This is kinda hacky, but we want to keep mars independant of the server
-        #usually we would want to initiate a tcp-ip stream and send our pdf over
-        #packets. To do this we would need to have mars have some 'knowledge' of 
-        #the server. As I said, that's not preferred.
-
-        #My solution is to base64 encode the file, and send it via the logger
-        #this simplifies the entire process, and keeps us from coupling
         graphCommand = graphCommand.split(' ')
         if len(graphCommand) > 1:
             self.graphUtil.generate_pdf(graphCommand[1])
         else:
             self.graphUtil.generate_pdf()
-        self.logFile('telemetry_graphs.pdf')
-
-    #Sends with structure: magic namelength delimiter name filedata
-    #magicheader: <<<_file_record_>>>
-    #namelength: integer
-    #delimiter: _
-    #filedata: the local file read in as base64
-    def logFile(self, fileIn):    
-        with open(fileIn, 'rb') as f:
-            nameLength = str(len(fileIn))
-            logger.info('<<<_file_record_>>>' + nameLength + '_' + fileIn + base64.b64encode(f.read()))
 
     def listLogs(self):
         logger.info(self.graphUtil.get_all_outputs())

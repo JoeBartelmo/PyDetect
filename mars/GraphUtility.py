@@ -5,11 +5,13 @@ import os
 import fnmatch
 import logging
 
-logger = logging.getLogger('mars_logger')
+logger = logging.getLogger('mars_logging')
+telemetryGraphName = 'telemetry_graph.pdf'
 
 class GraphUtility(object):
 
     def __init__(self, config):
+        self.fileLoc = config.file_forward_location
         self.output_path = config.logging.output_path + '/output'
 
     def get_all_outputs(self):
@@ -26,6 +28,10 @@ class GraphUtility(object):
             inputFolder = self.get_all_outputs()[0]
         inputFolder = self.output_path + '/' + inputFolder
 
+        if os.path.isdir(inputFolder) == False:
+            logger.error('Attempted to load logs from directory ' + inputFolder + ' failed. Folder does not exist')
+            return
+
         for f in os.listdir(inputFolder):
             if fnmatch.fnmatch(f, '*.csv'):
                 filename = inputFolder + '/' + f
@@ -33,8 +39,8 @@ class GraphUtility(object):
         if filename is None:
             log.warning('Could not find a *.csv file in ' + inputFolder)
             return
-        logger.info(filename)  
-        with PdfPages('telemetry_graphs.pdf') as pdf:
+        logger.info(filename) 
+        with PdfPages(telemetryGraphName) as pdf:
 
             out = pdf.infodict()
             out['Title'] = 'Telemetry data graphs'
@@ -59,3 +65,6 @@ class GraphUtility(object):
             plot_data('RunClock', 'BatteryRemaining', 'Run Clock', 'Battery Remaining', 'Remaining Battery versus time elapsed')
     
             pyp.close()
+
+            #file is now generated. Move it into folder and have the server take care of the rest
+            os.rename(telemetryGraphName, self.fileLoc + telemetryGraphName)

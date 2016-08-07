@@ -1,16 +1,16 @@
 {
   "user_input" : {
-    "log_name": "<insert pod team name here>",
+    "log_name": "insert_pod_team_name_here",
     "current_battery": 192.0
   },
   "logging": {
     "index_path":"/home/ubuntu/PyDetect/maven/index.js",
-    "output_path":"/home/ubuntu/PyDetect/mars"
+    "output_path":"/home/ubuntu/PyDetect/mars",
+    "connection_path":"/home/ubuntu/PyDetect/mars/connection"
   },
   "conversions": {
     "code_to_rpm" : 111.1,
     "rpm_to_speed" : 0.0020228
-
   },
   "valmar":{
     "command_path":"/home/ubuntu/PyDetect/valmar/command.json",
@@ -18,10 +18,11 @@
     "beam_gap_path":"/home/ubuntu/PyDetect/valmar/beam.gap"
   },
   "watchdog": {
-    "enable_watchdog":true,
+    "enable_watchdog":false,
     "recall_code":"M1005",
     "display_log_timeout":10.0,
     "braking_distance":3.8,
+    "connection_timeout":30.0,
 
     "under_voltage_alert": 12.0,
     "under_voltage_warning": 11.0,
@@ -44,5 +45,6 @@
     "timeout": 10,
     "total_battery": 192.0,
     "track_length": 1500.0
-  }
+  },
+  "file_forward_location": "/phobos/PyDetect/mars/files/"
 }

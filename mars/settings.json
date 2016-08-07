@@ -4,19 +4,18 @@
     "current_battery": 192.0
   },
   "logging": {
-    "index_path":"/home/ubuntu/PyDetect/maven/index.js",
-    "output_path":"/home/ubuntu/PyDetect/mars",
-    "connection_path":"/home/ubuntu/PyDetect/mars/connection"
+    "index_path":"/phobos/PyDetect/maven/index.js",
+    "output_path":"/phobos/PyDetect/mars",
+    "connection_path":"/phobos/PyDetect/mars/connection"
   },
   "conversions": {
     "code_to_rpm" : 111.1,
     "rpm_to_speed" : 0.0020228
-
   },
   "valmar":{
-    "command_path":"/home/ubuntu/PyDetect/valmar/command.json",
-    "telemetry_path":"/home/ubuntu/PyDetect/valmar/telemetry.json",
-    "beam_gap_path":"/home/ubuntu/PyDetect/valmar/beam.gap"
+    "command_path":"/phobos/PyDetect/valmar/command.json",
+    "telemetry_path":"/phobos/PyDetect/valmar/telemetry.json",
+    "beam_gap_path":"/phobos/PyDetect/valmar/beam.gap"
   },
   "watchdog": {
     "enable_watchdog":false,
@@ -46,5 +45,6 @@
     "timeout": 10,
     "total_battery": 192.0,
     "track_length": 1500.0
-  }
+  },
+  "file_forward_location": "/phobos/PyDetect/mars/files/"
 }
