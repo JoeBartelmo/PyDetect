@@ -1,3 +1,4 @@
+import json
 import threading
 import time
 from Queue import Empty
@@ -14,7 +15,6 @@ class VideoThread(threading.Thread):
     def run(self):
         print time.time()
         while self.stopped() is False:
-            
             flag, frame = self._vidcap.read()
 
             if not flag:
@@ -24,11 +24,6 @@ class VideoThread(threading.Thread):
                 frame = self.transformFunction(frame)
 
             self._queue.put(frame)
-            #print self._queue.qsize()
-
-            #size = self._queue.qsize()
-            #while self._queue.qsize() > 5 and self._queue.qsize() >= size - 5 and self.stopped() == False:
-            #    time.sleep(.001)
 
         self.empty_queue()
         self._queue.join()
@@ -74,16 +69,12 @@ class TelemetryThread(threading.Thread):
     def run(self):
         while self.stopped() is False:
             try:
-                item = self._queue.get(timeout=0.75)
-            except Empty:
-                continue
-
-            if type(item) == str:    # i.e. is a warning or error
-                self._widget.update_(item)
-                self._widget.update()
-
-            elif item:
-                self._widgets.parent.command_w.log(item)   # TODO change to depickle or de-json
+                record = self._queue.get(timeout=1)
+            except:
+                pass
+            telemetryData = json.loads(record.msg)
+            #print telemetryData
+            self._widget.set_telemetry_data(telemetryData)
 
     def stop(self):
         self._stop.set()

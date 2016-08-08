@@ -163,7 +163,6 @@ class MainApplication(tk.Frame):
     def start_telemetry(self):
         """ after 5 seconds, start telemtry updates. """
         self.telemetry_w.tthread.start()
-        self.after(100, self.telemetry_w.run_telemetry)   # TODO decide on appropriate interval
 
     def close_(self):
         self.telemetry_w.quit_()

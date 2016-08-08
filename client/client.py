@@ -50,7 +50,7 @@ try:
    
     #give a second or 2 for rtsp streams to start
     #ideally we would wait until something is raised; time constraints
-    time.sleep(5)
+    time.sleep(4)
  
     # start gui
     gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)

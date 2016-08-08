@@ -1,3 +1,4 @@
+import json
 import Tkinter as tk
 from Queue import Queue, Empty
 import sys
@@ -16,53 +17,61 @@ class TelemetryWidget(tk.Frame):
         tk.Frame.__init__(self, parent, bd=2, relief='groove')
         self.parent = parent
 
-        self.string_vars = {}
-        self.telemtry_labels = {}
+        #contains all pretty views
+        self.translationKeys = self.load_keys('../gui/telemetryTranslation.json')
+        self.labels = {}
+        self.values = {}
+        self.telemetry_data = {}
 
-        self.telemetry_keys = ['','displacement', 'velocity', 'rpm', \
-                '', 'power', 'batt_remaining','voltage','current', '', 'conected',\
-                'frame_size', 'int_time', '', 'time']
-        self.pretty_keys = ['Robot:','Displacement [m]:', 'Velocity [m/h]:', 'RPM [r/min]:', 'Battery:', 'Power [bool]:', '% Remaining [%age]:', 'Voltage [mV]:', 'Current [mA]:', 'Camera:', 'Connected [bool]:', 'Frame Size [rxc]:', 'Integration Time [s]:', 'Miscellaneous:', 'Time since start [s]:']
+        #instantiate ui
+        self.set_telemetry_ui()
 
-        self.init_ui()
+        #start grabbing data
         self.telem_queue = client_queue_in
         self.tthread = TelemetryThread(self, client_queue_in)
+        self.update_telemetry_loop()
 
-    def init_ui(self):
+    def set_telemetry_ui(self, json_object = None):
         """ Initialize visual elements of widget. """
-
-        for idx, key in enumerate(self.telemetry_keys):
+        for key, val in self.translationKeys.iteritems():
             # label
-            l = tk.Label(self, text=self.pretty_keys[idx], padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18)
-            l.grid(row=idx, column=0, sticky='w')
+            if val['display']:
+                if key not in self.labels:
+                    #update label row
+                    self.labels[key] = tk.Label(self, text=val['friendly_name'], padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18)
+                    self.labels[key].grid(row=val['display_order'], column=0, sticky='w')
+                    #update value column
+                    self.values[key] = tk.Label(self, padx=5, pady=5, width=18, anchor='w')
+                    self.values[key].grid(row=val['display_order'],column=1, sticky='w')
+                    self.telemetry_data[key] = ''
+                
+        self.update()
+       
+    def set_telemetry_data(self, telemetryData):
+        self.telemetry_data = telemetryData
 
-            # actual telemetry
-            self.string_vars[key] = tk.StringVar()
-            self.string_vars[key].set(key)
-            self.telemtry_labels[key] = tk.Label(self, textvariable=self.string_vars[key], padx=5, pady=5, width=18, anchor='w')
-            self.telemtry_labels[key].grid(row=idx,column=1, sticky='w')
-        
-    def run_telemetry(self, delay=100):
-        """ Update telemetry continuously. """
-        item = None
-
-        try:
-            item = self.tthread._queue.get(timeout=0.50)   # non-blocking
-            if item:
-                for i in self.telemetry_keys:
-                    self.string_vars[i].set(telemetry[i])
-                self.update()
-        except Empty:
-            pass
-        
-        self.after(delay, self.run_telemetry, delay)
-
+    def update_telemetry_loop(self):
+        for key, val in self.translationKeys.iteritems():
+            if val['display']:
+                #print 'Telemetry Data:'
+                #print self.telemetry_data
+                self.values[key]
+                self.values[key]['text'] = self.telemetry_data[key]
+        self.update() 
+        self.after(500, self.update_telemetry_loop)
+ 
     def quit_(self):
         """ Customized quit function to allow for safe closure of processes. """
         self.tthread.stop()
         if self.tthread.is_alive():
             self.tthread.join()
         self.quit()
+    
+    def load_keys(self, config_file):
+        with open(config_file) as f:
+            configuration = \
+                json.load(f)#.replace('\n', '').replace(' ', '').replace('\r', '')
+        return configuration
 
 if __name__=='__main__':
     from Queue import Queue
