@@ -14,15 +14,15 @@ Originally, we were told that "A camera on top of an RC car" would be optimal" W
 ### Program Structure
 We have seperated this project into several submodules as mentioned heretofore. The primary reason is an attempt to make this project loosely coupled and allow for testing of independant modules. The module sub structure thusly is given in the following table:
 
-Module  | Module Dependencies | Description
-- | - | -
-Maven | | Responsible for capturing and relaying RTSP streams. Interface command line
-Valmar |  | Responsible for obtaining beam gap data and other IBeam related data
-Mars  | Valmar, Maven | Responsible for control of mars and control of the rover
-Server | Mars | Responsible for Client Communication and relay to the mars controller
-Client | Server, GUI | Responsible for communication between the server and self. Responsible for 
-GUI | Client | Responsible for diplay of data in a user friendly way from the client 
-setup-tk1| | Will automatically install all dependencies for the tk1 (rover) 
+|Module  | Module Dependencies | Description |
+|--------|---------------------|--------------|
+| Maven | None | Responsible for capturing and relaying RTSP streams. Interface command line
+| Valmar | None | Responsible for obtaining beam gap data and other IBeam related data
+| Mars  | Valmar, Maven | Responsible for control of mars and control of the rover
+| Server | Mars | Responsible for Client Communication and relay to the mars controller
+| Client | Server, GUI | Responsible for communication between the server and self. Responsible for piping data to the GUI  
+| GUI | Client | Responsible for diplay of data in a user friendly way from the client 
+| setup-tk1| None | Will automatically install all dependencies for the tk1 (rover) 
 
 ### Rover Dependencies
   - OpenCV4Tegra - http://elinux.org/Jetson/Installing_OpenCV
