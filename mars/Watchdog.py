@@ -181,6 +181,8 @@ class Watchdog(object):
 
         elif value == 2:
             logger.critical('battery may be near death!')
+            logger.critical('initating recall!')
+            self.recall()
 
         elif value == 1:
             logger.warning("battery may be close to dying, please check")
