@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash
 #
 # rc.local
 #
@@ -11,19 +11,32 @@
 #
 # By default this script does nothing.
 
-#enable performace mode and all cores
+#i messed up fdisk somehow :shrug:
+mount -t ext4 /dev/sda1 /phobos
 
+#Adjust as needed
+pins=(57 160 161 162 163 164 165 166)
+cores=(0 1 2 3)
+
+#blows open permissions for all else
 chmod 777 -R "/sys/class/gpio"
-echo "57" > "/sys/class/gpio/export"
-echo "out" > "/sys/class/gpio/gpio57/direction"
-echo "1" > "/sys/class/gpio/gpio57/value"
 
+#sets up, and blows open permissions for each pin
+for index in "${pins[@]}"; do
+    echo "$index" > "/sys/class/gpio/export"
+    chmod 777 "/sys/class/gpio/gpio$index/value"
+    chmod 777 "/sys/class/gpio/gpio$index/direction"
+    echo "out" > "/sys/class/gpio/gpio$index/direction"
+    echo "0" > "/sys/class/gpio/gpio$index/value"
+done
+
+#Enable all cores
 echo "0" > "/sys/devices/system/cpu/cpuquiet/tegra_cpuquiet/enable"
-echo "1" > "/sys/devices/system/cpu/cpu0/online"
-echo "1" > "/sys/devices/system/cpu/cpu1/online"
-echo "1" > "/sys/devices/system/cpu/cpu2/online"
-echo "1" > "/sys/devices/system/cpu/cpu3/online"
 echo "performance" > "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+
+for index in "${cores[@]}"; do
+    echo "1" > "/sys/devices/system/cpu/cpu$index/online"
+done
 
 exit 0
 
