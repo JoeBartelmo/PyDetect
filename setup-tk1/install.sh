@@ -4,7 +4,8 @@ apt-add-repository multiverse
 apt-get update
 
 #install essentials
-apt-get install git vlc build-essential checkinstall curl libssl-dev tightvncserver python-pip python-dev python-imaging-tk libvlc-dev libvlc5
+apt-get install git vlc build-essential checkinstall curl libssl-dev tightvncserver python-pip python-dev python-imaging-tk libvlc-dev libvlc5 libgtk2.0 gnome-devel
+
 
 #install vlc and node
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
@@ -55,4 +56,12 @@ pip install matplotlib
 
 #don't prompt on shutdown
 gsettings set com.canonical.indicator.session suppress-logout-restart-shutdown true
+
+#setup for ximea
+wget http://www.ximea.com/downloads/recent/XIMEA_Linux_SP.tgz
+tar -xf XIMEA_Linux_SP.tgz 
+cd package
+./install -cam_usb30
+tee /sys/module/usbcore/parameters/usbfs_memory_mb >/dev/null <<<0
+gpasswd -a ubuntu plugdev
 
