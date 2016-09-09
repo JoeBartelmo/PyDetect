@@ -1,11 +1,12 @@
 #install git and base repositories
-apt-get install git
 apt-add-repository universe
 apt-add-repository multiverse
 apt-get update
 
+#install essentials
+apt-get install git vlc build-essential checkinstall curl libssl-dev tightvncserver python-pip python-dev python-imaging-tk libvlc-dev libvlc5
+
 #install vlc and node
-apt-get install vlc build-essential checkinstall curl libssl-dev
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
 source ~/.bashrc
 source /home/ubuntu/.bashrc
@@ -21,7 +22,6 @@ rm -rf dtrx-7.1
 rm dtrx-7.1.tar.gz
 
 #VNC config
-apt-get install tightvncserver
 mkdir -p /etc/lightdm/lightdm.conf.d
 cp vnc_config /etc/lightdm/lightdm.conf.d/vnc.conf
 
@@ -50,12 +50,8 @@ chmod +x /etc/rc.local
 /etc/rc.local
 
 #pip, and other dependencies
-apt-get install python-opencv python-pip python-dev
 pip install numpy
 pip install matplotlib
-
-#clientside imaging stuff
-apt-get install python-imaging-tk libvlc-dev libvlc5
 
 #don't prompt on shutdown
 gsettings set com.canonical.indicator.session suppress-logout-restart-shutdown true
