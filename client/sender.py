@@ -16,14 +16,27 @@ PING_RATE = .5
 SOCKET_TIMEOUT = 5
 FLOAT_PACKER = struct.Struct('f')
 
-class PingThread(threading.Thread):
-    def __init__(self, serverAddr, port):
-        super(PingThread, self).__init__()
+class SenderThread(threading.Thread):
+    '''
+    This thread is responsible for updating mars every PING_RATE seconds with
+    client datetime for server connection verification. In addition, it is responsible
+    for sending the commands from the client Queue
+    '''
+    def __init__(self, serverAddr, port, commandQueue, connection):
+        super(SenderThread, self).__init__()
         self._stop = threading.Event()
         self.serverAddr = serverAddr
         self.port = port
+        self.commandQueue = commandQueue
+        self.connection = connection
     
     def run(self):
+        '''
+        1) Send ping over to socket
+            On fail -> we must be disconnected, raise exception which falls back to client.py
+
+        2) Check to see if there's anything on our Command Queue, if there is, send it.
+        '''
         logger.debug('Launching client ping thread on port ' + str(self.port))
         sock = socket.create_connection((self.serverAddr, self.port))
 
@@ -34,7 +47,6 @@ class PingThread(threading.Thread):
                 readyState = select([],[sock,],[], SOCKET_TIMEOUT)
                 if readyState[1]:
                     datetime = self.microtime()
-                    print 'sending timeof ', datetime
                     sock.sendall(FLOAT_PACKER.pack(datetime))
                 else:
                     print 'Client could not ping server'
@@ -47,8 +59,13 @@ class PingThread(threading.Thread):
                     break
                 raise serr
 
+            if not self.commandQueue.empty():
+                command = commandQueue.get()
+                logger.debug('Sending Command " ' + command  + '" to the server')
+                self.connection.sendall(command)
+
         sock.close()
-        logger.debug('Ping thread stopped')
+        logger.debug('Sender thread stopped')
         self.stop()
 
     def microtime(self):

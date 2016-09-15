@@ -13,7 +13,7 @@ from marsClientException import MarsClientException
 logger = logging.getLogger('mars_logging')
 
 class ListenerThread(threading.Thread):
-    def __init__(self, q, serverAddr, port, name = 'Thread', displayInConsole = True):
+    def __init__(self, q, serverAddr, port, logLevel, name = 'Thread', displayInConsole = True):
         super(ListenerThread, self).__init__()
         self._stop = threading.Event()
         self.q = q
@@ -22,6 +22,7 @@ class ListenerThread(threading.Thread):
         self.name = name
         self.displayInConsole = displayInConsole
         self.socketTimeout = 3
+        self.logLevel = logLevel
     
     def run(self):
         logger.debug('Client side Listener Thread "'+self.name+'" waiting for connection...')
@@ -54,10 +55,11 @@ class ListenerThread(threading.Thread):
                     obj = pickle.loads(chunk)
                     record = logging.makeLogRecord(obj)
 
-                    if self.q is not None:
-                        self.q.put(record)
-                    if self.displayInConsole:
-                        logger.log(record.levelno, record.msg + ' (' + record.filename + ':' + str(record.lineno) + ')')
+                    if record.levelno >= self.logLevel:
+                        if self.q is not None:
+                            self.q.put(record)
+                        if self.displayInConsole:
+                            logger.log(record.levelno, record.msg + ' (' + record.filename + ':' + str(record.lineno) + ')')
                 except socket_error as serr:
                     if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
                         logger.critical('Was not able to connect to "' + self.name + '" socket, closing app')

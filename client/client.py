@@ -8,7 +8,7 @@ from Queue import Queue
 from ColorLogger import initializeLogger 
 sys.path.insert(0, '../gui')
 import gui
-from clientPing import PingThread
+from sender import SenderThread
 from marsClientException import MarsClientException
 
 MARS_PORT      = 1337
@@ -19,35 +19,12 @@ PING_PORT      = 1341
 
 MARS_KILL_COMMAND = 'exit'
 
-sys.argv.pop(0)
-
-#grabbing server address from arguments
-serverAddr = 'localhost'
-if len(sys.argv) == 1:
-    serverAddr = sys.argv[0]
-logger = initializeLogger('./', logging.DEBUG, 'mars_logging', sout = True, colors = True)
-logger.info('Using server address:' + serverAddr)
-
-#Queues responsible for communicating between GUI and this socket client
-guiTelemetryInput = Queue()
-guiLoggingInput = Queue()
-guiOutput = Queue() 
-
-#thread responsibel for handling telemetry from mars
-telemThread = ListenerThread(guiTelemetryInput, serverAddr, TELEMETRY_PORT, 'Telemetry Receive', displayInConsole = False)
-#thread responsible for handling mars logging
-debugThread = ListenerThread(guiLoggingInput, serverAddr, DEBUG_PORT, 'Logging Receive')
-#thread responsible for handling files sent from mars
-fileListenerThread = FileListenerThread(serverAddr, FILE_PORT)
-#socket that will send data to the server
-commandSocket = socket.create_connection((serverAddr, MARS_PORT))
-#socket that will maintain ping to server
-pingThread = PingThread(serverAddr, PING_PORT)
-pingThread.start()
 #defines whether or not we have closed threads already
 closedThreads = False
-
 def closeAllThreads():
+    '''
+    Cleans up all open sockets and threads on client
+    '''
     global closedThreads
     if closedThreads == False:
         print 'Closing ping thread...'
@@ -65,28 +42,91 @@ def closeAllThreads():
         print 'Closing command socket...'
         commandSocket.close()
 
-try:    
-    # Send configuration data
-    with open('config.json', 'r') as content_file:
-        message = content_file.read().replace('\n','').replace(' ', '')
-    commandSocket.sendall(message)
+def displayUsage(unknownObj = None):
+    '''
+    Prints userfriendly usage of client.py
+    '''
+    if unknownObj is not None:
+        print('Unknown parameter, ' + str(unknownObj) + '\n')
+    print('Incorrect arguments, please specify a json string or object with which to load configuration')
+    print('\tUsage:\tclient.py [Server IP|Server Domain]')
+    print('\t\t-d: Debug mode')
+    print('\t\t-c: CLI (No GUI) mode')
 
-    telemThread.start()
-    debugThread.start()
-    fileListenerThread.start()
-   
-    #give a second or 2 for rtsp streams to start
-    #ideally we would wait until something is raised; time constraints
-    time.sleep(4)
- 
-    # start gui
-    gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
-
+if __name__ == '__main__':
+    filename = sys.argv.pop(0)#client.py
     
-except KeyboardInterrupt:
-    closeAllThreads()
-except MarsClientException as ex:
-    closeAllThreads()
-    raise ex
-finally:
-    closeAllThreads()
+    logMode = logging.INFO 
+    cliMode = False    
+
+    #TODO: Install CLI and use that instead
+    if len(sys.argv) < 1 or len(sys.argv) > 3:
+        displayUsage()
+        sys.exit(1)
+    else:
+        serverAddr = sys.argv.pop(0)
+        while(len(sys.argv)):
+            mode = sys.argv.pop(0)
+            if mode == '-d':
+                logMode = logging.DEBUG
+            elif mode == '-c':
+                cliMode = True
+            else:
+                displayUsage(mode)
+                sys.exit(1)
+    sys.argv.append(filename)#tkinter wants the filename to be there
+
+    #grabbing server address from arguments
+    logger = initializeLogger('./', logMode, 'mars_logging', sout = True, colors = True)
+    logger.info('Using server address:' + serverAddr)
+
+    #Queues responsible for communicating between GUI and this socket client
+    guiTelemetryInput = Queue()
+    guiLoggingInput = Queue()
+    guiOutput = Queue() 
+
+    #thread responsibel for handling telemetry from mars
+    telemThread = ListenerThread(guiTelemetryInput, serverAddr, logMode, TELEMETRY_PORT, 'Telemetry Receive', displayInConsole = False)
+    #thread responsible for handling mars logging
+    debugThread = ListenerThread(guiLoggingInput, serverAddr, logMode, DEBUG_PORT, 'Logging Receive')
+    #thread responsible for handling files sent from mars
+    fileListenerThread = FileListenerThread(serverAddr, FILE_PORT)
+    #socket that will send data to the server
+    commandSocket = socket.create_connection((serverAddr, MARS_PORT))
+    #socket that will maintain ping to server
+    pingThread = SenderThread(serverAddr, PING_PORT, guiOutput, commandSocket)
+    pingThread.start()
+    try:    
+        # Send configuration data
+        with open('config.json', 'r') as content_file:
+            message = content_file.read().replace('\n','').replace(' ', '')
+        commandSocket.sendall(message)
+
+        telemThread.start()
+        debugThread.start()
+        fileListenerThread.start()
+       
+        #give a second or 2 for rtsp streams to start
+        #ideally we would wait until something is raised; time constraints
+        time.sleep(4)
+     
+        # start gui
+        if cliMode:
+            while True:
+                command = raw_input('Type Your Command:')
+                guiOutput.put(command)
+                if command == MARS_KILL_COMMAND:
+                    break 
+        else:
+            gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
+        
+    except KeyboardInterrupt:
+        closeAllThreads()
+    except MarsClientException as ex:
+        closeAllThreads()
+        raise ex
+    finally:
+        closeAllThreads()
+else:
+    displayUsage()
+

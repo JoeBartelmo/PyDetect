@@ -66,18 +66,25 @@ def parseObject(jsonObject):
 
     return json_string
 
-def main():
-    if len(sys.argv) > 3 or len(sys.argv) < 2:
-        print('Incorrect arguments, please specify a json string or object with which to load configuration')
-        print('\tUsage:       run.py [json_string|filename.json]')
-        print('\tDebug Usage: run.py [json_string|filename.json] debug')
-        return
 
+def displayUsage():
+    '''
+    Prints userfriendly usage of run.py
+    '''
+    print('Incorrect arguments, please specify a json string or object with which to load configuration')
+    print('\tUsage:\trun.py [json_string|filename.json]')
+    print('\t\t-d: Debug mode')
+
+if __name__=='__main__':
+    sys.argv.pop(0)#run.py
     
     debugEnabled = False
-    if len(sys.argv) > 2 and sys.argv[2] == 'debug':
+    #TODO: Use python cli module eventually
+    if len(sys.argv) > 1 and sys.argv[1] == '-d':
         debugEnabled = True
-    sys.argv.pop(0)
+    else:
+        displayUsage()
+        sys.exit(1)      
     json_config = sys.argv[0]
 
     if json_config.lower().endswith('.json'):
@@ -89,10 +96,6 @@ def main():
         json_string = configString.replace(" ", "")
     else:
         json_string = ''.join(sys.argv)
-
-    
+ 
     run(json_string, None, debugEnabled)
-
-
-main()
 
