@@ -76,8 +76,13 @@ class ListenerThread(threading.Thread):
     def stop(self):
         self._stop.set()
   
-
     def microtime(self):
+        '''
+        The client sends current posix timestamp, ideally we want to subtract that from
+        current posix timestamp (both utc), but we're having issues and to complete this
+        project timely i'm going to ignore for now
+        -Joe
+        '''
         unixtime = datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
         return unixtime.days*24*60*60 + unixtime.seconds + unixtime.microseconds/1000000.0
 

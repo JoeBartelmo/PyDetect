@@ -10,12 +10,19 @@ from select import error
 DEBUG_LOG_PORT     = 1338
 TELEMETRY_LOG_PORT = 1339
 FILE_FORWARD_PORT  = 1340
+#timeout in seconds for which we think mars exploded or stopped working
+#for reference: mars updates every .4-.5 seconds
+MARS_TIMEOUT = 2
 
 class SocketManager(threading.Thread):
     '''
     Responsible for turning sockets off when connection is
     lossed, then re-enabling them when socket connection is
     re-established
+
+    Explicit: When mars dies, so does this thread
+              When client dies, this thread lives until mars dies
+              There is no stop() here on purpose for the above conditions
     '''
     def __init__(self, q, connectionQueue, onlineQueue, client_ip, connection, listener):
         super(SocketManager, self).__init__()
@@ -31,6 +38,17 @@ class SocketManager(threading.Thread):
         self.listener = listener
 
     def run(self):
+        '''
+        Launches the fileForwarding thread.
+        Kills zombie thread if present
+        while true
+            Verifies that the listener (client communication) is connected
+                if stopped: start zombiethread to keep mars alive
+                if not: verify mars is alive
+        close listener
+        close fileforwarder
+        remove socket connections from logging instances
+        '''
         self.fileRelay.start()
 
         if self.zombieThread is not None:
@@ -45,9 +63,14 @@ class SocketManager(threading.Thread):
                 print 'Client has lossed Connection'
                 self.zombieThread = ZombieThread(connectionQueue)
                 self.zombieThread.start() 
+                break
             #check that mars is still running
-            if self.onlineQueue.get(timeout=2) == 0:
-                print 'Mars has stopped running'
+            try:
+                if self.onlineQueue.get(timeout=MARS_TIMEOUT) == 0:
+                    print 'Mars has stopped running'
+                    break
+            except Empty:
+                print 'Mars has stopped running unexpectedly'
                 break
             time.sleep(.03)
         #stop all threads on given client
@@ -61,12 +84,22 @@ class SocketManager(threading.Thread):
         print 'No longer logging to given socket'
   
     def wireLogToPort(self, name, client, port):
+        '''
+        Attaches a sockethandler to logger with name of name
+        and logs to a given client on a prespecified port
+        '''
         logger = logging.getLogger(name)
         logger.setLevel(logging.INFO)
         socketHandler = logging.handlers.SocketHandler(client, port)
         logger.addHandler(socketHandler)
         logger.debug('complete handshake')
         return logger
+
+    def joinZombie(self):
+        if self.zombieThread is not None:
+            self.zombieThread.stop()
+            self.zombieThread.join()
+            self.zombieThread = None
 
 class ZombieThread(threading.Thread):
     '''
@@ -79,12 +112,21 @@ class ZombieThread(threading.Thread):
         self.onlineQueue = onlineQueue
 
     def run(self):
+        '''
+        Continuously sends -1 to mars to tell it that there is no client
+        If nothing is received from mars in a given timeout time, we assume
+        mars is dead and kill connection 
+        '''
         while self.stopped() is False:
-            self.connectionQueue.put(0)
+            self.connectionQueue.put(-1)
             #check that mars is still running
-            if self.onlineQueue.get(timeout=5) == 0:
-                print 'Mars has stopped running'
-                break;
+            try:
+                if self.onlineQueue.get(timeout=MARS_TIMEOUT) == 0:
+                    print 'Mars has stopped running'
+                    break
+            except Empty:
+                print 'Mars has stopped running unexpectedly'
+                break
             time.sleep(.03)
 
     def stop(self):
