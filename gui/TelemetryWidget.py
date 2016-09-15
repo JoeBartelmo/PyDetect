@@ -1,5 +1,5 @@
+import json
 import Tkinter as tk
-from multiprocessing import Process
 from Queue import Queue, Empty
 import sys
 
@@ -17,114 +17,65 @@ class TelemetryWidget(tk.Frame):
         tk.Frame.__init__(self, parent, bd=2, relief='groove')
         self.parent = parent
 
-        self.string_vars = {}
-        self.telemtry_labels = {}
+        #contains all pretty views
+        self.translationKeys = self.load_keys('../gui/telemetryTranslation.json')
+        self.labels = {}
+        self.values = {}
+        self.telemetry_data = {}
 
-        self.telemetry_keys = ['displacement', 'velocity', 'rpm', \
-                'power', 'batt_remaining','voltage','current','conected',\
-                'frame_size', 'int_time', 'time']
+        #instantiate ui
+        self.set_telemetry_ui()
 
-        for i in self.telemetry_keys:
-            self.string_vars[i] = tk.StringVar()
-            self.string_vars[i].set(i)
-            self.telemtry_labels[i] = tk.Label(self, textvariable=self.string_vars[i],padx=5, pady=5, width=18,anchor='w')
-
-        self.init_ui()
+        #start grabbing data
         self.telem_queue = client_queue_in
         self.tthread = TelemetryThread(self, client_queue_in)
+        self.update_telemetry_loop()
 
-    def init_ui(self):
+    def set_telemetry_ui(self, json_object = None):
         """ Initialize visual elements of widget. """
-        # TODO clean up
-        #options = (,padx=5, pady=5, bd=4, justify='left')
-        # ROBOT
-        tk.Label(self, text='Robot:', bd=2, justify='left', relief='ridge', width=19, anchor='w').grid(row=0,column=0, sticky='w')
-        tk.Label(self, text='Displacement [m]:', padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18).grid(row=1,column=0, sticky='w')
-        self.telemtry_labels['displacement'].grid(row=1,column=1, sticky='w')
+        for key, val in self.translationKeys.iteritems():
+            # label
+            if val['display']:
+                if key not in self.labels:
+                    #update label row
+                    self.labels[key] = tk.Label(self, text=val['friendly_name'], padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18)
+                    self.labels[key].grid(row=val['display_order'], column=0, sticky='w')
+                    #update value column
+                    self.values[key] = tk.Label(self, padx=5, pady=5, width=18, anchor='w')
+                    self.values[key].grid(row=val['display_order'],column=1, sticky='w')
+                    self.telemetry_data[key] = ''
+                
+        self.update()
+       
+    def set_telemetry_data(self, telemetryData):
+        self.telemetry_data = telemetryData
 
-        tk.Label(self, text='Velocity [m/h]:',padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18).grid(row=2,column=0, sticky='w')
-        self.telemtry_labels['velocity'].grid(row=2,column=1, sticky='w')
-
-        tk.Label(self, text='RPM [r/min]:',padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18).grid(row=3,column=0, sticky='w')
-        self.telemtry_labels['rpm'].grid(row=3,column=1, sticky='w')
-
-        ### BATTERY
-        tk.Label(self, text='Battery:', bd=2, justify='left', relief='ridge', width=19, anchor='w').grid(row=4,column=0, sticky='w')
-        tk.Label(self, text='Power [bool]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=5,column=0, sticky='w')
-        self.telemtry_labels['power'].grid(row=5,column=1, sticky='w')
-
-        tk.Label(self, text='% Remaining [%age]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=6,column=0, sticky='w')
-        self.telemtry_labels['batt_remaining'].grid(row=6,column=1, sticky='w')
-
-        tk.Label(self, text='Voltage [mV]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=7,column=0, sticky='w')
-        self.telemtry_labels['voltage'].grid(row=7,column=1, sticky='w')
-
-        tk.Label(self, text='Current [mA]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=8,column=0, sticky='w')
-        self.telemtry_labels['current'].grid(row=8,column=1, sticky='w')
-
-        ### CAMERA
-        tk.Label(self, text='Camera:', bd=2, justify='left', relief='ridge', width=19, anchor='w').grid(row=9,column=0, sticky='w')
-        tk.Label(self, text='Connected [bool]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=10,column=0, sticky='w')
-        self.telemtry_labels['conected'].grid(row=10,column=1, sticky='w')
-
-        tk.Label(self, text='Frame Size [rxc]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=11,column=0, sticky='w')
-        self.telemtry_labels['frame_size'].grid(row=11,column=1, sticky='w')
-
-        tk.Label(self, text='Integration Time [s]:',padx=5, pady=5,  bd=2, justify='left', relief='ridge', width=18).grid(row=12,column=0, sticky='w')
-        self.telemtry_labels['int_time'].grid(row=12,column=1, sticky='w')
-
-        ### MISC
-        tk.Label(self, text='Miscellaneous:', bd=2, justify='left', relief='ridge', width=19, anchor='w').grid(row=13,column=0, sticky='w')
-        tk.Label(self, text='Time since start [s]:',padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18).grid(row=14,column=0, sticky='w')
-        self.telemtry_labels['time'].grid(row=14, column=1, sticky='w')
-
-    def start(self):
-        """ Start grabbing telemtry data from client. """
-        self.p.start()
-        
-    def update_(self, telemetry):
-        """ Update display. """
-        for i in self.telemetry_keys:
-            self.string_vars[i].set(telemetry[i])
-        
-    def persistent_update(self, delay=100):
-        """ Update telemetry continuously. """
-        item = None
-        try:
-            item = self.internal_queue.get(False)   # non-blocking
-        except Empty:
-            pass
-        
-        if type(item) == str:
-            self.update_(item)
-            self.update()
-        elif item:   # warning or error
-            self.parent.command_w.log(item)   # TODO change to depickle 
-
-        self.after(delay, self.persistent_update, delay)
-
-    def get_data(self):
-        """ Grab telemtry data from client continuously. """
-        while True:
-            # TODO get data from json or whereever
-            try:
-                telem = self.telem_queue.get(False)
-            except Empty:
-                continue
-
-            if not telem:
-                continue
-            self.internal_queue.put(telem)
-
+    def update_telemetry_loop(self):
+        for key, val in self.translationKeys.iteritems():
+            if val['display']:
+                #print 'Telemetry Data:'
+                #print self.telemetry_data
+                self.values[key]
+                self.values[key]['text'] = self.telemetry_data[key]
+        self.after(500, self.update_telemetry_loop)
+ 
     def quit_(self):
         """ Customized quit function to allow for safe closure of processes. """
         self.tthread.stop()
-        self.tthread.join()
-        self.quit()
+        if self.tthread.is_alive():
+            self.tthread.join()
+        self.destroy()
+    
+    def load_keys(self, config_file):
+        with open(config_file) as f:
+            configuration = \
+                json.load(f)#.replace('\n', '').replace(' ', '').replace('\r', '')
+        return configuration
 
 if __name__=='__main__':
+    from Queue import Queue
     root = tk.Tk()
-    t = TelemetryWidget(root)
+    t = TelemetryWidget(root, Queue())
     t.grid()
     root.update()
     print t.winfo_height(), t.winfo_width()

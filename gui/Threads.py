@@ -1,6 +1,10 @@
+import json
 import threading
 import time
 from Queue import Empty
+
+import logging
+logger = logging.getLogger('mars_logging')
 
 class VideoThread(threading.Thread):
     def __init__(self, vidcap, queue):
@@ -12,9 +16,8 @@ class VideoThread(threading.Thread):
         self.transformFunction = None
 
     def run(self):
-        print time.time()
+        logger.debug('Starting VideoThread @ ' + str(time.time()))
         while self.stopped() is False:
-            
             flag, frame = self._vidcap.read()
 
             if not flag:
@@ -24,21 +27,30 @@ class VideoThread(threading.Thread):
                 frame = self.transformFunction(frame)
 
             self._queue.put(frame)
-            #print self._queue.qsize()
-
-            #size = self._queue.qsize()
-            #while self._queue.qsize() > 5 and self._queue.qsize() >= size - 5 and self.stopped() == False:
-            #    time.sleep(.001)
 
         self.empty_queue()
-        self._queue.join()
         self._vidcap.release()
-        print 'Killing Video Thread'
+        logger.debug('Killing Video Thread')
 
     def empty_queue(self):
         while self._queue.empty() is False:
-            __ = self._queue.get()
-            self._queue.task_done()
+            try:
+                __ = self._queue.get(False)
+            except Empty:
+                self._queue.task_done()
+                break
+
+    def get_ideal_images(self):
+        self.ideal_pump = []
+
+        for s in self.streams:
+            if s._vidcap.isOpened():
+                flag, frame = s._vidcap.read()
+                if not flag:
+                    continue
+                ideal_keypoint = self.fast.detect(frame, None)
+                self.ideal_pump.append(stealth_pumpkin(frame, ideal_keypoint))
+
 
     def stop(self):
         self._stop.set()
@@ -62,20 +74,11 @@ class TelemetryThread(threading.Thread):
     def run(self):
         while self.stopped() is False:
             try:
-                item = self._queue.get(timeout=0.75)
+                record = self._queue.get(False)
+                telemetryData = json.loads(record.msg)
+                self._widget.set_telemetry_data(telemetryData)
             except Empty:
-                continue
-
-            if not telem:
-                continue
-            
-            if type(item) == str:    # i.e. is a warning or error
-                self._widget.update_(item)
-                self._widget.update()
-
-            elif item:
-                self._widgets.parent.command_w.log(item)   # TODO change to depickle 
-        print 'Killing Telemetry Thread'
+                pass
 
     def stop(self):
         self._stop.set()

@@ -6,6 +6,9 @@ import sys
 import cv2
 import time
 
+import logging
+logger = logging.getLogger('mars_logging')
+
 class MasterWidget(tk.Frame):
     """
     Controls playback of video streams from valmar.

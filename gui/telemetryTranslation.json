@@ -1,0 +1,96 @@
+{
+    "RPM": {
+        "display_order": 0,
+        "friendly_name": "RPM",
+        "unit":"rpm",
+        "display": true
+    },
+    "SystemVoltage": {
+        "display_order": 1,
+        "friendly_name": "Battery Voltage",
+        "unit":"V",
+        "display": true
+    },
+    "SystemCurrent": {
+        "display_order": 2,
+        "friendly_name": "Battery Current",
+        "unit":"A",
+        "display": true
+    },
+    "SensorDistance": {
+        "display_order": 3,
+        "friendly_name": "Distance Sensor",
+        "unit":"m",
+        "display": true
+    },
+    "Speed": {
+        "display_order": 4,
+        "friendly_name": "Velocity",
+        "unit":"m/s",
+        "display": true
+    },
+    "Power": {
+        "display_order": 5,
+        "friendly_name": "Power Consumption",
+        "unit":"W",
+        "display": true
+    },
+    "IntervalDistance": {
+        "friendly_name": "",
+        "unit":"",
+        "display":false
+    },
+    "TotalDistance": {
+        "display_order": 6,
+        "friendly_name": "Distance Traveled",
+        "unit":"m",
+        "display": true
+    },
+    "IntervalDisplacement": {
+        "friendly_name": "",
+        "unit":"",
+        "display": false
+    },
+    "TotalDisplacement": {
+        "display_order": 7,
+        "friendly_name": "Distance from Start",
+        "unit":"m",
+        "display": true
+    },
+    "BatteryRemaining": {
+        "display_order": 8,
+        "friendly_name": "Battery Percentage",
+        "unit":"%",
+        "display": true
+    },
+    "SetSpeed": {
+        "friendly_name": "",
+        "unit":"",
+        "display":false
+    },
+    "MotorCircuit": {
+        "display_order": 9,
+        "friendly_name": "Motor",
+        "unit":"",
+        "display": true
+    },
+    "LedCircuit": {
+        "display_order": 10,
+        "friendly_name": "LED",
+        "unit":"",
+        "display": true
+    },
+    "LaserCircuit": {
+        "display_order": 11,
+        "friendly_name": "Laser",
+        "unit":"",
+        "display": true
+    },
+    "LEDBrightness": {
+        "display_order": 12,
+        "friendly_name": "LED Brightness",
+        "unit":"/9",
+        "display": true
+    }
+}
+
