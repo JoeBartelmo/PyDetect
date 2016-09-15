@@ -10,6 +10,7 @@ from select import select
 import struct
 import errno
 from marsClientException import MarsClientException
+from socket import error as socket_error
 
 logger = logging.getLogger('mars_logging') 
 
@@ -24,7 +25,11 @@ class FileListenerThread(threading.Thread):
     def run(self):
         logger.debug('Client side FileListener Thread waiting for connectionn...')
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.bind(('', self.port))
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if self.serverAddr != 'localhost':
+            listener.bind(('', self.port))
+        else:
+            listener.bind(('localhost', self.port))
         listener.listen(1)
 
         listenerConnection, address = listener.accept()

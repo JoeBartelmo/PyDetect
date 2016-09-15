@@ -69,7 +69,7 @@ class Mars(object):
 
         logger.debug("Integration time:" + str(round(self._integTime, 4)) + ':\t'  + str(rawArray))
         self._telemetry['RunClock'] = round(time.time() - self._arduino._timeInit, 4)
-        self._telemetry['ConnectionStatus'] = self.checkConnection()
+        self._telemetry['Ping'] = self.checkConnection()
 
         rpm = rawArray[0]
         self._telemetry['RPM'] = float(rpm)
@@ -229,10 +229,8 @@ class Mars(object):
         #if there is no watchdog queue, then we do not have a client connection, we're local testing
         if self._watchdogQueue is None:
             return 1
-
         try:
-            self._watchdogQueue.get(timeout=self._config.watchdog.display_log_timeout)
-            return 1
+            return self._watchdogQueue.get(timeout=self._config.watchdog.display_log_timeout)
         except Empty:
             return 0
 

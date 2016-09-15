@@ -6,6 +6,7 @@ import logging, logging.handlers
 from listener import ListenerThread
 from fileForwarder import FileRelay
 from select import error
+from Queue import Empty
 
 DEBUG_LOG_PORT     = 1338
 TELEMETRY_LOG_PORT = 1339
@@ -76,7 +77,9 @@ class SocketManager(threading.Thread):
         #stop all threads on given client
         if not self.listener.stopped():
             self.listener.stop()
+        self.listener.join()
         self.fileRelay.stop()
+        self.fileRelay.join()
         print 'All sockets have been disconnected...'
         #remove previous socketHandlers
         self.debugLog.handlers = [h for h in self.debugLog.handlers if not isinstance(h, logging.handlers.SocketHandler)]
@@ -89,7 +92,6 @@ class SocketManager(threading.Thread):
         and logs to a given client on a prespecified port
         '''
         logger = logging.getLogger(name)
-        logger.setLevel(logging.INFO)
         socketHandler = logging.handlers.SocketHandler(client, port)
         logger.addHandler(socketHandler)
         logger.debug('complete handshake')

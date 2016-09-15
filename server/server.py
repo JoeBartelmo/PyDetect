@@ -19,8 +19,8 @@ sock.listen(1)
 
 #Socket to maintain ping from client
 pingSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('', PING_PORT)
-pingSocket.bind(server_address)
+ping_address = ('', PING_PORT)
+pingSocket.bind(ping_address)
 pingSocket.listen(1)
 
 #this is the queue used for the client to communicate to the server,
@@ -42,6 +42,7 @@ client = None
 closedThreads = False
 
 def startMars(configuration): 
+    print 'Mars as found to not be online, starting...'
     handler = MarsThread(configuration, commandQueue, connectionQueue, onlineQueue, True)
     handler.start()
 
@@ -69,7 +70,7 @@ try:
     while True:
         print >>sys.stderr, 'Server launched on socket 1337; waiting for client...'
         connection, client_address = sock.accept()
-        pingConnection, client_ip = pingSocket.accept()
+        pingConnection, ping_address = pingSocket.accept()
 
         client_ip, client_port = client_address
         print >>sys.stderr, 'connection from', client_ip
@@ -77,12 +78,11 @@ try:
         #no matter what The client will always send a json config data
         data = connection.recv(4096)
         print >>sys.stderr, 'received "%s"' % data
-
-        listener = ListenerThread(commandQueue, connectionQueue, connection, pingConnection)
-        listener.start()
         
         if data is not None:
             if validate_json(data):
+                listener = ListenerThread(commandQueue, connectionQueue, connection, pingConnection)
+                listener.start()
                 client = SocketManager(commandQueue, connectionQueue, onlineQueue, client_ip, connection, listener) 
                 client.start()
                 try:

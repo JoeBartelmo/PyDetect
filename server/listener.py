@@ -35,6 +35,13 @@ class ListenerThread(threading.Thread):
         self.pingSocket.settimeout(SOCKET_TIMEOUT)
 
     def run(self):
+        '''
+        1) get ping from client
+            if ping empty or we didn't receive a ping, increase timeout
+            once we hit max timeout, we discontinue this thread
+        2) get command from client
+            if not empty, pipe to mars
+        '''
         timeWithoutCommand = 0 
         timeouts = 0
         currentPing = 0

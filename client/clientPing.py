@@ -24,13 +24,12 @@ class PingThread(threading.Thread):
         self.port = port
     
     def run(self):
-        logger.debug('Launching client ping thread...')
+        logger.debug('Launching client ping thread on port ' + str(self.port))
         sock = socket.create_connection((self.serverAddr, self.port))
-        sock.settimeout(SOCKET_TIMEOUT)
 
         clientException = None
 
-        while not self.stopped():
+        while self.stopped() == False:
             try:
                 readyState = select([],[sock,],[], SOCKET_TIMEOUT)
                 if readyState[1]:
@@ -48,7 +47,6 @@ class PingThread(threading.Thread):
                     break
                 raise serr
 
-        sock.shutdown(2)
         sock.close()
         logger.debug('Ping thread stopped')
         self.stop()

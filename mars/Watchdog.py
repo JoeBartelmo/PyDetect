@@ -58,7 +58,7 @@ class Watchdog(object):
         sysV = telemetry['SystemVoltage']
         sysI = telemetry['SystemCurrent']
         sensorDistance = telemetry['SensorDistance']
-        connectionStatus = telemetry['ConnectionStatus']
+        connectionStatus = telemetry['Ping']
         self.sniffOverCurrent(sysI)
         self.sniffOverVoltage(sysV)
         self.sniffUnderVoltage(sysV)
@@ -125,7 +125,7 @@ class Watchdog(object):
                 self._shouldBrake = 1
 
     def sniffConnection(self, connectionStatus):
-        if connectionStatus == 1:
+        if connectionStatus != -1:
             self._connectionDownTime = 0
             self._lastConnection = time.time()
         else:
