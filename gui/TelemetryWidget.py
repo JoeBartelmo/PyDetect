@@ -57,7 +57,6 @@ class TelemetryWidget(tk.Frame):
                 #print self.telemetry_data
                 self.values[key]
                 self.values[key]['text'] = self.telemetry_data[key]
-        self.update() 
         self.after(500, self.update_telemetry_loop)
  
     def quit_(self):
@@ -65,7 +64,7 @@ class TelemetryWidget(tk.Frame):
         self.tthread.stop()
         if self.tthread.is_alive():
             self.tthread.join()
-        self.quit()
+        self.destroy()
     
     def load_keys(self, config_file):
         with open(config_file) as f:

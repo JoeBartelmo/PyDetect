@@ -3,6 +3,9 @@ import threading
 import time
 from Queue import Empty
 
+import logging
+logger = logging.getLogger('mars_logging')
+
 class VideoThread(threading.Thread):
     def __init__(self, vidcap, queue):
         super(VideoThread, self).__init__()
@@ -13,7 +16,7 @@ class VideoThread(threading.Thread):
         self.transformFunction = None
 
     def run(self):
-        print time.time()
+        logger.debug('Starting VideoThread @ ' + str(time.time()))
         while self.stopped() is False:
             flag, frame = self._vidcap.read()
 
@@ -26,14 +29,16 @@ class VideoThread(threading.Thread):
             self._queue.put(frame)
 
         self.empty_queue()
-        self._queue.join()
         self._vidcap.release()
-        print 'Killing Video Thread'
+        logger.debug('Killing Video Thread')
 
     def empty_queue(self):
         while self._queue.empty() is False:
-            __ = self._queue.get()
-            self._queue.task_done()
+            try:
+                __ = self._queue.get(False)
+            except Empty:
+                self._queue.task_done()
+                break
 
     def get_ideal_images(self):
         self.ideal_pump = []
@@ -69,12 +74,11 @@ class TelemetryThread(threading.Thread):
     def run(self):
         while self.stopped() is False:
             try:
-                record = self._queue.get(timeout=1)
-            except:
+                record = self._queue.get(False)
+                telemetryData = json.loads(record.msg)
+                self._widget.set_telemetry_data(telemetryData)
+            except Empty:
                 pass
-            telemetryData = json.loads(record.msg)
-            #print telemetryData
-            self._widget.set_telemetry_data(telemetryData)
 
     def stop(self):
         self._stop.set()

@@ -1,5 +1,3 @@
-# Copyright MIT
-# Primary Author: Nathan Dileas
 import time
 #from multiprocessing import Queue, Process   # change to from queue import Queue?
 from Queue import Queue
@@ -15,6 +13,9 @@ from Threads import VideoThread
 from PIL import Image, ImageTk
 
 import vlc_bindings as vlc
+
+import logging
+logger = logging.getLogger('mars_logging')
 
 class VideoStream(tk.Frame):
     """

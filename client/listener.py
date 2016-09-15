@@ -23,6 +23,7 @@ class ListenerThread(threading.Thread):
     def run(self):
         logger.debug('Client side Listener Thread "'+self.name+'" waiting for connection...')
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if self.serverAddr != 'localhost':
             listener.bind(('', self.port))
         else:

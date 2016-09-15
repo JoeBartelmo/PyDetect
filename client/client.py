@@ -55,6 +55,11 @@ try:
     # start gui
     gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
 
+    logger.info('Closing all sockets')
+    sock.close()
+    telemThread.stop()
+    debugThread.stop()
+    fileListenerThread.stop()
     #while True:
     #    command = raw_input('\n')
     #    sock.sendall(command)
