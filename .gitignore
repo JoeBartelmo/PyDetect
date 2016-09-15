@@ -85,3 +85,6 @@ maven/node_modules/
 #C++
 *.o
 valmar/target
+
+#vim
+*.swp

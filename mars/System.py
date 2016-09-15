@@ -15,7 +15,11 @@ logger = logging.getLogger('mars_logging')
 
 class System(object):
 
-    def __init__(self, config, timestamp, q = None):
+    def __init__(self, config, timestamp, q = None, watchdogQueue = None, marsOnlineQueue = None):
+
+        #assign queues
+        self._watchdogQueue = watchdogQueue
+        self._marsOnlineQueue = marsOnlineQueue
 
         #Init devices
         self._devices = self.initDevices(config)
@@ -30,7 +34,7 @@ class System(object):
 
         logger.info("All devices connected")
         logger.info("System initialized.")
-
+        
         if q is None:
             answer = raw_input("Would you like to start? Y/n: ")
             if answer.lower() == 'n' or answer.lower() == 'no':
@@ -68,7 +72,7 @@ class System(object):
                          }
         myLED = LED()
         myMotor = Motor()
-        myMars = Mars(myArduino, config, myLED, myMotor, myPinHash)
+        myMars = Mars(myArduino, config, myLED, myMotor, myPinHash, self._watchdogQueue, self._marsOnlineQueue)
         time.sleep(.5)
         myValmar = Valmar(config, myMars)
 

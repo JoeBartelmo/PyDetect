@@ -53,12 +53,12 @@ def initOutput(config, q = None, debugMode = False):
     return timestamp
 
 
-def run(json_string, q = None, debugMode = False):
+def run(json_string, q = None, watchDogQueue = None, marsRunningQueue = None, debugMode = False):
     config = parseConfig(json_string)
 
     timestamp = initOutput(config, q, debugMode)
 
-    System(config, timestamp, q)
+    System(config, timestamp, q, watchDogQueue, marsRunningQueue)
 
 def parseObject(jsonObject):
     with open(jsonObject) as f:

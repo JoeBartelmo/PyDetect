@@ -5,6 +5,7 @@ ark9719
 import re
 import time
 import logging
+from Queue import Empty
 import sys
 
 logger = logging.getLogger('mars_logging')
@@ -15,7 +16,7 @@ class Mars(object):
     stats on time, battery, distance, power, and more.
     """
 
-    def __init__(self, arduino, config, LED, Motor, pinHash):
+    def __init__(self, arduino, config, LED, Motor, pinHash, watchdogQueue, marsOnlineQueue):
         self._arduino = arduino
         self._LED = LED
         self._Motor = Motor
@@ -25,6 +26,8 @@ class Mars(object):
         self._integTime = time.time()
         self._currentBattery = self._config.constants.total_battery
         self._recallOverride = False
+        self._watchdogQueue = watchdogQueue
+        self._marsOnlineQueue = marsOnlineQueue
 
         telemetry = {}
         self._telemetry = telemetry
@@ -41,6 +44,9 @@ class Mars(object):
         :param integTime:
         :return:
         """
+        
+        if self._marsOnlineQueue is not None:
+            self._marsOnlineQueue.put(1)
 
         serialData = None
         if self._arduino._init == True:
@@ -216,7 +222,17 @@ class Mars(object):
         return battPercentReturned
 
     def checkConnection(self):
-        with open(self._config.logging.connection_path,'r') as connectionFile:
-            connectionStatus = True if connectionFile.read() == "1" else False
-        return connectionStatus
+        '''
+        If Mars is launched via server, this will check connection and return either 1 or 0.
+        Otherwise always returns 1
+        '''
+        #if there is no watchdog queue, then we do not have a client connection, we're local testing
+        if self._watchdogQueue is None:
+            return 1
+
+        try:
+            self._watchdogQueue.get(timeout=self._config.watchdog.display_log_timeout)
+            return 1
+        except Empty:
+            return 0
 
