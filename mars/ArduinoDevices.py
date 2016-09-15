@@ -133,7 +133,7 @@ class Motor(object):
         :return:
         """
         self._arduino.write("M0010")
-        logger.warning("Brake engaged")
+        logger.warning("Brake has been enabled")
 
     def write(self):
         """

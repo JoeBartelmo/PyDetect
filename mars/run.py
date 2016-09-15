@@ -96,6 +96,6 @@ if __name__=='__main__':
         json_string = configString.replace(" ", "")
     else:
         json_string = ''.join(sys.argv)
- 
-    run(json_string, None, debugEnabled)
+    
+    run(json_string, None, None, None, debugEnabled)
 
