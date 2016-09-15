@@ -61,7 +61,7 @@ class SocketManager(threading.Thread):
             #check client still connected
             if self.listener.stopped():
                 print 'Client has lossed Connection'
-                self.zombieThread = ZombieThread(connectionQueue)
+                self.zombieThread = ZombieThread(self.connectionQueue, self.onlineQueue)
                 self.zombieThread.start() 
                 break
             #check that mars is still running

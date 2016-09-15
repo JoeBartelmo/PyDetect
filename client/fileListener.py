@@ -8,6 +8,8 @@ import logging
 from ColorLogger import initializeLogger 
 from select import select
 import struct
+import errno
+from marsClientException import MarsClientException
 
 logger = logging.getLogger('mars_logging') 
 
@@ -29,29 +31,43 @@ class FileListenerThread(threading.Thread):
         listenerConnection.setblocking(0)
         listenerConnection.settimeout(self.socketTimeout)
 
-        logger.debug('Client side FileListener Thread "' + self.name + '" connected!')
+        logger.warning('Client side "File Listener" Thread connected!')
+        clientException = None
+        
         while self.stopped() is False:
             isReady = select([listenerConnection],[],[],self.socketTimeout)
             if isReady[0]:
-                fileNameLength = self.readIntFromSocket(listenerConnection)
-                fileName = listenerConnection.recv(fileNameLength)
+                try:
+                    fileNameLength = self.readIntFromSocket(listenerConnection)
+                    fileName = listenerConnection.recv(fileNameLength)
 
-                logger.info('Downloading file [' + fileName + ']')
+                    logger.info('Downloading file [' + fileName + ']')
 
-                fileLength = self.readIntFromSocket(listenerConnection)
-                fileBase64Str = ''
-                while len(fileBase64Str) < fileLength:
-                    bytesToRead = 64
-                    if fileLength - len(fileBase64Str) < bytesToRead:
-                        bytesToRead = fileLength - len(fileBase64Str)
-                    fileBase64Str += listenerConnection.recv(bytesToRead)
+                    fileLength = self.readIntFromSocket(listenerConnection)
+                    fileBase64Str = ''
+                    while len(fileBase64Str) < fileLength:
+                        bytesToRead = 64
+                        if fileLength - len(fileBase64Str) < bytesToRead:
+                            bytesToRead = fileLength - len(fileBase64Str)
+                        fileBase64Str += listenerConnection.recv(bytesToRead)
 
-                with open(fileName, 'wb') as f:
-                    f.write(fileBase64Str.decode('base64'))
+                    with open(fileName, 'wb') as f:
+                        f.write(fileBase64Str.decode('base64'))
+                except socket_error as serr:
+                    if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
+                        logger.critical('Was not able to connect to File Listener socket, closing app')
+                        clientException = MarsClientException('Could not connect to port' + str(self.port))
+                        break
+                    raise serr
+                    
         
+        listenerConnection.shutdown(2)
+        listener.shutdown(2)
         listenerConnection.close()
         listener.close()
-        logger.debug('Client Side FileListener Thread Stopped')
+        logger.warning('Client Side "File Listener" Thread Stopped')
+        if clientException is not None:
+            raise clientException
     
     def readIntFromSocket(self, listenerConnection):
         return int(struct.unpack('I', listenerConnection.recv(4))[0])

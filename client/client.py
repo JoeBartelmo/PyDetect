@@ -9,63 +9,84 @@ sys.path.insert(0, '../gui')
 from ColorLogger import initializeLogger 
 import gui
 from clientPing import PingThread
+from marsClientException import MarsClientException
 
-marsPort = 1337
-debugLog = 1338
-telemLog = 1339
-filePort = 1340
-pingPort = 1341
+MARS_PORT      = 1337
+DEBUG_PORT     = 1338
+TELEMETRY_PORT = 1339
+FILE_PORT      = 1340
+PING_PORT      = 1341
 
-killCommand = 'exit'
+MARS_KILL_COMMAND = 'exit'
 
 sys.argv.pop(0)
 
+#grabbing server address from arguments
 serverAddr = 'localhost'
 if len(sys.argv) == 1:
     serverAddr = sys.argv[0]
 logger = initializeLogger('./', logging.DEBUG, 'mars_logging', sout = True, colors = True)
-#logger.info('Using server address:', serverAddr)
 
 #Queues responsible for communicating between GUI and this socket client
 guiTelemetryInput = Queue()
 guiLoggingInput = Queue()
 guiOutput = Queue() 
 
+#thread responsibel for handling telemetry from mars
+telemThread = ListenerThread(guiTelemetryInput, serverAddr, TELEMETRY_PORT, 'Telemetry Receive', displayInConsole = False)
+#thread responsible for handling mars logging
+debugThread = ListenerThread(guiLoggingInput, serverAddr, DEBUG_PORT, 'Logging Receive')
+#thread responsible for handling files sent from mars
+fileListenerThread = FileListenerThread(serverAddr, FILE_PORT)
 #socket that will send data to the server
-commandSocket = socket.create_connection((serverAddr, marsPort))
+commandSocket = socket.create_connection((serverAddr, MARS_PORT))
 #socket that will maintain ping to server
-pingThread = PingThread(serverAddr, pingPort)
+pingThread = PingThread(serverAddr, PING_PORT)
 pingThread.start()
+#defines whether or not we have closed threads already
+closedThreads = False
+
+def closeAllThreads():
+    global closedThreads
+    if closedThreads == False:
+        print 'Closing ping thread...'
+        pingThread.stop()
+        pingThread.join()
+        print 'Closing Telemetry Thread...'
+        telemThread.stop()
+        telemThread.join()
+        print 'Closing Mars log thread...'
+        debugThread.stop()
+        debugThread.join()
+        print 'Closing Fie Listener thread...'
+        fileListenerThread.stop()
+        fileListenerThread.join()
+        print 'Closing command socket...'
+        commandSocket.close()
 
 try:    
     # Send configuration data
     with open('config.json', 'r') as content_file:
         message = content_file.read().replace('\n','').replace(' ', '')
     commandSocket.sendall(message)
-    # start gui
-    #gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
-
-    #sockets that continuously receive data from server and
-    #pipe to the user
-    telemThread = ListenerThread(guiTelemetryInput, serverAddr, telemLog, 'Telemetry Receive', displayInConsole = False)
-    debugThread = ListenerThread(guiLoggingInput, serverAddr, debugLog, 'Logging Receive')
-    fileListenerThread = FileListenerThread(serverAddr, filePort)
 
     telemThread.start()
     debugThread.start()
     fileListenerThread.start()
+    # start gui
+    #gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
+    
     while True:
         command = raw_input('\n')
         commandSocket.sendall(command)
         if command == killCommand:
             time.sleep(2)#lets all messages be displayed from listener
-            commandSocket.close()
-            telemThread.stop()
-            debugThread.stop()
-            fileListenerThread.stop()
             break
     
 except KeyboardInterrupt:
-    logger.warning('Closing socket')
-    commandSocket.close()
-
+    closeAllThreads()
+except MarsClientException as ex:
+    closeAllThreads()
+    raise ex
+finally:
+    closeAllThreads()

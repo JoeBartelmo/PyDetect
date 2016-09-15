@@ -6,6 +6,9 @@ import datetime
 import calendar
 import time
 import struct
+from marsClientException import MarsClientException
+import errno
+from socket import error as socket_error
 
 logger = logging.getLogger('mars_logging')
 
@@ -25,19 +28,30 @@ class PingThread(threading.Thread):
         sock = socket.create_connection((self.serverAddr, self.port))
         sock.settimeout(SOCKET_TIMEOUT)
 
-        while not self.stopped():
-            readyState = select([],[sock,],[], SOCKET_TIMEOUT)
-            if readyState[1]:
-                datetime = self.microtime()
-                print 'sending timeof ', datetime
-                sock.sendall(FLOAT_PACKER.pack(datetime))
-            else:
-                print 'Client could not ping server'
-                self.stop()
-            time.sleep(PING_RATE)
+        clientException = None
 
+        while not self.stopped():
+            try:
+                readyState = select([],[sock,],[], SOCKET_TIMEOUT)
+                if readyState[1]:
+                    datetime = self.microtime()
+                    print 'sending timeof ', datetime
+                    sock.sendall(FLOAT_PACKER.pack(datetime))
+                else:
+                    print 'Client could not ping server'
+                    self.stop()
+                time.sleep(PING_RATE)
+            except socket_error as serr:
+                if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
+                    logger.critical('Was not able to connect to Ping socket, closing app')
+                    clientException = MarsClientException('Was not able to connect to socket ' + str(self.port))
+                    break
+                raise serr
+
+        sock.shutdown(2)
         sock.close()
         logger.debug('Ping thread stopped')
+        self.stop()
 
     def microtime(self):
         unixtime = datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)

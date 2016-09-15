@@ -31,9 +31,39 @@ connectionQueue = Queue()
 #this is the queue that mars uses to notify the server that it's online
 onlineQueue = Queue()
 
+#defines mars handler thread, responsible for keeping mars alive
+handler = None
+#defines the listener thread, responsible for keeping communication alive between
+#server and client
+listener = None
+#defines the socket thread, responsbile for handling mars' transmission from the server to the client
+client = None
+#defines whether or not we have closed threads already
+closedThreads = False
+
 def startMars(configuration): 
     handler = MarsThread(configuration, commandQueue, connectionQueue, onlineQueue, True)
     handler.start()
+
+def closeAllThreads():
+    global closedThreads
+    if closedThreads == False:
+        print 'Closing listener...'
+        if listener is not None:
+            listener.stop()
+            listener.join()
+        print 'Closing handler...'
+        if handler is not None:
+            handler.stop()
+            handler.join()
+        print 'Closing client...'
+        if client is not None:
+            client.joinZombie()
+            client.join()
+        print 'Closing sockets...'
+        sock.close()
+        pingSocket.close()
+        closedThreads = True
 
 try:
     while True:
@@ -62,6 +92,6 @@ try:
                 except Empty:
                     startMars(data)
 except KeyboardInterrupt:
-    sock.close()
+    closeAllThreads()
 finally:
-    sock.close()
+    closeAllThreads()

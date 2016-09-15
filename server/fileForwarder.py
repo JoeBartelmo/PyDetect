@@ -39,6 +39,8 @@ class FileRelay(threading.Thread):
                     os.remove(directoryToScan + filename)
 
             time.sleep(3)
+        self._socket.shutdown(2)
+        self._socket.close()
         logger.info('File Relay Thread stopped')
 
     def stop(self):

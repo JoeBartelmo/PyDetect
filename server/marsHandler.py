@@ -4,9 +4,11 @@ from select import select
 sys.path.insert(0, '../mars')
 import run as Mars #note as long as __main__ is defined this will write a usage violation to the console
 
+MARS_EXIT_COMMAND = 'exit'
+
 class MarsThread(threading.Thread):
     '''
-    This is an unstopable thread. The idea here is that the client will connect
+    The idea here is that the client will connect
     And we want to keep mars chugging when the client losses connection.
     We want to easily reconnnect, so we stick with queues here, mars won't stop
     until mars is explicitly stopped or watchdog stop is triggered
@@ -24,3 +26,5 @@ class MarsThread(threading.Thread):
     def run(self):
         Mars.run(self.config, self.marsCommandQueue, self.marsConnectionQueue, self.marsOnlineQueue, self.debugEnabled)
 
+    def stop(self):
+        self.marsCommandQueue.put(MARS_EXIT_COMMAND)
