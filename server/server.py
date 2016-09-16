@@ -43,6 +43,7 @@ closedThreads = False
 
 def startMars(configuration): 
     print 'Mars as found to not be online, starting...'
+    global handler
     handler = MarsThread(configuration, commandQueue, connectionQueue, onlineQueue, True)
     handler.start()
 
