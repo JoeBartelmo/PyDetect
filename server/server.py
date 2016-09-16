@@ -70,6 +70,7 @@ def closeAllThreads():
 try:
     while True:
         print >>sys.stderr, 'Server launched on socket 1337; waiting for client...'
+        print 'At any time you can ^C to safely disconnect the server and stop mars'
         connection, client_address = sock.accept()
         pingConnection, ping_address = pingSocket.accept()
 

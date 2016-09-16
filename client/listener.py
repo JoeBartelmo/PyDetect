@@ -8,12 +8,11 @@ import logging
 from select import select
 from socket import error as socket_error
 import errno
-from marsClientException import MarsClientException
 
 logger = logging.getLogger('mars_logging')
 
 class ListenerThread(threading.Thread):
-    def __init__(self, q, serverAddr, port, logLevel, name = 'Thread', displayInConsole = True):
+    def __init__(self, q, serverAddr, port, logLevel, errorQueue, name = 'Thread', displayInConsole = True):
         super(ListenerThread, self).__init__()
         self._stop = threading.Event()
         self.q = q
@@ -23,6 +22,7 @@ class ListenerThread(threading.Thread):
         self.displayInConsole = displayInConsole
         self.socketTimeout = 3
         self.logLevel = logLevel
+        
     
     def run(self):
         logger.debug('Client side Listener Thread "'+self.name+'" waiting for connection...')
@@ -37,8 +37,6 @@ class ListenerThread(threading.Thread):
         listenerConnection, address = listener.accept()
         listenerConnection.setblocking(0)
         listenerConnection.settimeout(self.socketTimeout)
-        
-        clientException = None
 
         logger.warning('Client side Listener Thread "'+self.name+'" connected!')
         while self.stopped() is False:
@@ -64,7 +62,6 @@ class ListenerThread(threading.Thread):
                     if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
                         logger.critical('Was not able to connect to "' + self.name + '" socket, closing app')
                         
-                        clientException =  MarsClientException('Could not connect to socket' + str(self.port))
                         break
                     raise serr
 
@@ -75,8 +72,7 @@ class ListenerThread(threading.Thread):
         listener.close()
         logger.warning('Client Side Listener Thread "'+self.name+'" Stopped')
         
-        if clientException is not None:
-            raise clientException
+        self.stop()
 
     def stop(self):
         self._stop.set()

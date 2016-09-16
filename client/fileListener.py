@@ -9,7 +9,6 @@ from ColorLogger import initializeLogger
 from select import select
 import struct
 import errno
-from marsClientException import MarsClientException
 from socket import error as socket_error
 
 logger = logging.getLogger('mars_logging') 
@@ -37,9 +36,8 @@ class FileListenerThread(threading.Thread):
         listenerConnection.settimeout(self.socketTimeout)
 
         logger.warning('Client side "File Listener" Thread connected!')
-        clientException = None
         
-        while self.stopped() is False:
+        while self.stopped() == False:
             isReady = select([listenerConnection],[],[],self.socketTimeout)
             if isReady[0]:
                 try:
@@ -61,18 +59,17 @@ class FileListenerThread(threading.Thread):
                 except socket_error as serr:
                     if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
                         logger.critical('Was not able to connect to File Listener socket, closing app')
-                        clientException = MarsClientException('Could not connect to port' + str(self.port))
                         break
                     raise serr
                     
-        
+        logger.warning('Closing listener socket')
         listenerConnection.shutdown(2)
         listener.shutdown(2)
         listenerConnection.close()
         listener.close()
         logger.warning('Client Side "File Listener" Thread Stopped')
-        if clientException is not None:
-            raise clientException
+        
+        self.stop()
     
     def readIntFromSocket(self, listenerConnection):
         return int(struct.unpack('I', listenerConnection.recv(4))[0])

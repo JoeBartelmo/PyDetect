@@ -6,7 +6,6 @@ import datetime
 import calendar
 import time
 import struct
-from marsClientException import MarsClientException
 import errno
 from socket import error as socket_error
 
@@ -40,8 +39,6 @@ class SenderThread(threading.Thread):
         logger.debug('Launching client ping thread on port ' + str(self.port))
         sock = socket.create_connection((self.serverAddr, self.port))
 
-        clientException = None
-
         while self.stopped() == False:
             try:
                 readyState = select([],[sock,],[], SOCKET_TIMEOUT)
@@ -55,12 +52,11 @@ class SenderThread(threading.Thread):
             except socket_error as serr:
                 if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
                     logger.critical('Was not able to connect to Ping socket, closing app')
-                    clientException = MarsClientException('Was not able to connect to socket ' + str(self.port))
                     break
                 raise serr
 
             if not self.commandQueue.empty():
-                command = commandQueue.get()
+                command = self.commandQueue.get()
                 logger.debug('Sending Command " ' + command  + '" to the server')
                 self.connection.sendall(command)
 

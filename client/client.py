@@ -9,15 +9,17 @@ from ColorLogger import initializeLogger
 sys.path.insert(0, '../gui')
 import gui
 from sender import SenderThread
-from marsClientException import MarsClientException
 
+#ports we use for communication between client and server
 MARS_PORT      = 1337
 DEBUG_PORT     = 1338
 TELEMETRY_PORT = 1339
 FILE_PORT      = 1340
 PING_PORT      = 1341
-
+#command to shutdown mars
 MARS_KILL_COMMAND = 'exit'
+#time in seconds to verify we weren't able to connect
+TIME_TO_VERIFY_ESTABLISHED_CONNECTION = 4
 
 #defines whether or not we have closed threads already
 closedThreads = False
@@ -27,18 +29,22 @@ def closeAllThreads():
     '''
     global closedThreads
     if closedThreads == False:
-        print 'Closing ping thread...'
-        pingThread.stop()
-        pingThread.join()
-        print 'Closing Telemetry Thread...'
-        telemThread.stop()
-        telemThread.join()
-        print 'Closing Mars log thread...'
-        debugThread.stop()
-        debugThread.join()
-        print 'Closing Fie Listener thread...'
-        fileListenerThread.stop()
-        fileListenerThread.join()
+        if senderThread.stopped() == False:
+            print 'Closing Sender thread...'
+            senderThread.stop()
+            senderThread.join()
+        if telemThread.stopped() == False:
+            print 'Closing Telemetry Thread...'
+            telemThread.stop()
+            telemThread.join()
+        if debugThread.is_alive():
+            print 'Closing Mars log thread...'
+            debugThread.stop()
+            debugThread.join()
+        if fileListenerThread.stopped() == False:
+            print 'Closing File Listener thread...'
+            fileListenerThread.stop()
+            fileListenerThread.join()
         print 'Closing command socket...'
         commandSocket.close()
 
@@ -58,6 +64,7 @@ if __name__ == '__main__':
     
     logMode = logging.INFO 
     cliMode = False    
+    serverAddr = None
 
     #TODO: Install CLI and use that instead
     if len(sys.argv) < 1 or len(sys.argv) > 3:
@@ -83,19 +90,19 @@ if __name__ == '__main__':
     #Queues responsible for communicating between GUI and this socket client
     guiTelemetryInput = Queue()
     guiLoggingInput = Queue()
-    guiOutput = Queue() 
+    guiOutput = Queue()
 
     #thread responsibel for handling telemetry from mars
-    telemThread = ListenerThread(guiTelemetryInput, serverAddr, logMode, TELEMETRY_PORT, 'Telemetry Receive', displayInConsole = False)
+    telemThread = ListenerThread(guiTelemetryInput, serverAddr, TELEMETRY_PORT, logMode, 'Telemetry Receive', displayInConsole = False)
     #thread responsible for handling mars logging
-    debugThread = ListenerThread(guiLoggingInput, serverAddr, logMode, DEBUG_PORT, 'Logging Receive')
+    debugThread = ListenerThread(guiLoggingInput, serverAddr, DEBUG_PORT, logMode, 'Logging Receive')
     #thread responsible for handling files sent from mars
     fileListenerThread = FileListenerThread(serverAddr, FILE_PORT)
     #socket that will send data to the server
     commandSocket = socket.create_connection((serverAddr, MARS_PORT))
-    #socket that will maintain ping to server
-    pingThread = SenderThread(serverAddr, PING_PORT, guiOutput, commandSocket)
-    pingThread.start()
+    #socket that will maintain ping to server and send commands to server
+    senderThread = SenderThread(serverAddr, PING_PORT, guiOutput, commandSocket)
+    senderThread.start()
     try:    
         # Send configuration data
         with open('config.json', 'r') as content_file:
@@ -106,9 +113,13 @@ if __name__ == '__main__':
         debugThread.start()
         fileListenerThread.start()
        
-        #give a second or 2 for rtsp streams to start
-        #ideally we would wait until something is raised; time constraints
-        time.sleep(4)
+        #Verify we have succesfully connected
+        for index in range(0, TIME_TO_VERIFY_ESTABLISHED_CONNECTION):
+            if telemThread.stopped() or debugThread.stopped() or fileListenerThread.stopped() \
+                or senderThread.stopped():
+                closeAllThreads()
+                sys.exit(1)
+            time.sleep(1)
      
         # start gui
         if cliMode:
@@ -118,13 +129,10 @@ if __name__ == '__main__':
                 if command == MARS_KILL_COMMAND:
                     break 
         else:
-            gui.start(guiOutput, guiLoggingInput, guiTelemetryInput,serverAddr)
+            gui.start(guiOutput, guiLoggingInput, guiTelemetryInput, serverAddr)
         
     except KeyboardInterrupt:
         closeAllThreads()
-    except MarsClientException as ex:
-        closeAllThreads()
-        raise ex
     finally:
         closeAllThreads()
 else:
