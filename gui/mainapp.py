@@ -14,38 +14,34 @@ from img_proc.misc import demosaic
 import logging
 logger = logging.getLogger('mars_logging')
 
+
+CAMERA_PORT_MAP = {'left': 8554, 'right': 8555, 'center': 8556}
+
 class MainApplication(tk.Frame):
+    '''
+    Responsible for launching all 3 streams and reconnecting when needed.
+    '''
     def __init__(self, parent, client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.stream_order = [0,1,2]
+        self.server_ip = server_ip
 
         self.init_ui(client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
 
         self.fast = cv2.FastFeatureDetector()
         
+        self.runStreams = False
+ 
+        #Left Camera, Center Camera, Right Camera
+        self.streams = [None, None, None]
+        self.displayed_image = numpy.zeros((720,640,3))
+        
         self.start_streams()
         self.start_telemetry()
-        self.displayed_image = numpy.zeros((720,640,3))
         
     def init_ui(self, client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
         """ Initialize visual elements of widget. """
-        self.streams = []
-
-        logger.info('Attempting to connect to rtsp stream from left camera')
-        l_src = 'rtsp://' + server_ip + ':8554/'   # left camera setup
-        l = VideoThread(cv2.VideoCapture(l_src), Queue())
-        self.streams.append(l)
-
-        logger.info('Attempting to connect to rtsp stream from center camera')
-        c_src = 'rtsp://' + server_ip + ':8555/'   # center camera setup
-        c = VideoThread(cv2.VideoCapture(c_src), Queue())
-        self.streams.append(c)
-
-        logger.info('Attempting to connect to rtsp stream from right camera')
-        r_src = 'rtsp://' + server_ip + ':8556/'   # right camera setup
-        r = VideoThread(cv2.VideoCapture(r_src), Queue())
-        self.streams.append(r)
 
         logger.info('Appending photo image widget to main app')
         # Image display label
@@ -62,7 +58,6 @@ class MainApplication(tk.Frame):
         # control and logging widget
         self.command_w = ControlWidget(self, client_queue_cmd, client_queue_log)
         self.command_w.grid(row=1, column=1, rowspan=2, padx=5, pady=5, sticky='nw')
-
 
         logger.info('Finalizing frame...')
         # radiobuttons for choosing which stream is in focus
@@ -136,6 +131,10 @@ class MainApplication(tk.Frame):
         return (l_frame, c_frame, r_frame)
 
     def display_streams(self, delay=0):
+        if self.runStreams == False:
+            self.runStreams = True
+            return
+
         a, b, c = self.stream_order
         
         try:
@@ -175,9 +174,32 @@ class MainApplication(tk.Frame):
         self.after(delay, self.display_streams, delay)
 
     def start_streams(self):
+        '''
+        1) If streams are open, close them
+        2) Attempt connection to each RTSP stream
+        '''
+        if self.runStreams:
+            logger.info('Streams were already open on GUI, releasing and restarting capture')
+            self.runStreams = False
+            for s in self.streams:
+                if s is not None and s._vidcap.isOpened():
+                    s.stop()
+                    s.join()
+                    s = None
+            self.displayed_image = numpy.zeros((720,640,3))
+
+        iteration = 0
+        for camera in CAMERA_PORT_MAP:
+            logger.info('Attempting to connect to ' + camera + ' on port ' + str(CAMERA_PORT_MAP[camera]))
+            captureCv = VideoThread(cv2.VideoCapture('rtsp://' + self.server_ip + ':' + str(CAMERA_PORT_MAP[camera]) + '/'), Queue())
+            self.streams[iteration] = captureCv
+            iteration += 1
+
         for s in self.streams:
             if s._vidcap.isOpened():
                 s.start()
+
+        self.runStreams = True
         
         self.after(100, self.display_streams)   # TODO decide on appropriate interval
 

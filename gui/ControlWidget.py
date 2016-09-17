@@ -2,6 +2,8 @@ import Tkinter as tk
 from Queue import Queue
 from Queue import Empty 
 import logging
+from CustomTextWidget import CustomText
+import tkFont
 logger = logging.getLogger('mars_logging')
 
 class ControlWidget(tk.Frame):
@@ -40,9 +42,15 @@ class ControlWidget(tk.Frame):
         send_b.grid(row=1,column=1, padx=5, pady=5, sticky='w')
 
         # log output
-        self.log_output = tk.Text(self, bg='white')
+        self.log_output = CustomText(self, bg = 'white', setgrid = True)
         self.log_output.grid(row=0, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
+        #highlight/bolding
+        self.log_output.tag_configure("red", foreground="#ff0000",    font = "Consolas 8 bold" )
+        self.log_output.tag_configure("orange", foreground="#ff4500", font = "Consolas 8 bold" )
+        self.log_output.tag_configure("italic", foreground="#000000", font = "Consolas 8 italic" )
+        self.log_output.tag_configure("purple", foreground="#68228b", font = "Consolas 8 bold" )
+        
     def send_command(self):
         """ Send command to client. """
         print('Clicked Send Cmd Button')
@@ -52,18 +60,25 @@ class ControlWidget(tk.Frame):
             self.cmd_queue.put(cmd)   # send command to client
             self.cmd.set('')
 
-    def highlight(self, record):
+    def highlight(self, record, is_command = False):
         '''
         Responsible for highlighting the logging entries
-        TBD
         '''
-        recordLevel = getattr(record, 'levelno', 0)
+        recordLevel = getattr(record, 'levelno', 0)        
+
+        #user command
+        if is_command:
+            self.log_output.highlight_pattern(record.msg, "purple")
+            return
+        #debug
+        elif recordLevel == logging.DEBUG:
+            self.log_output.highlight_pattern(record.msg, "italic")
         #warning
-        if recordLevel > 10 and recordLevel < 20:
-            pass
+        elif recordLevel == logging.WARNING:
+            self.log_output.highlight_pattern(record.msg, "orange")
         #error
-        elif recordLevel >= 20:
-            pass
+        elif recordLevel == logging.ERROR or recordLevel == logging.CRITICAL:
+            self.log_output.highlight_pattern(record.msg, "red")            
 
     def log_loop(self):
         try:
@@ -71,8 +86,9 @@ class ControlWidget(tk.Frame):
             print record, ' obtained from queue'
             msgAttr = getattr(record, "msg", record)
             self.log_output.insert(tk.END, msgAttr + '\n')
+            self.log_output.see(tk.END)
             #self.log_output.pack()
-            self.highlight(record)
+            self.highlight(record, 'Sending Command' in msgAttr)
             #self.update()
         except Empty:
            pass 

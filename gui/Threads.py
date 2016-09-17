@@ -28,7 +28,7 @@ class VideoThread(threading.Thread):
 
             self._queue.put(frame)
 
-        self.empty_queue()
+        #self.empty_queue()
         self._vidcap.release()
         logger.debug('Killing Video Thread')
 
