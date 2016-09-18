@@ -10,6 +10,9 @@ from socket import error as socket_error
 import errno
 
 logger = logging.getLogger('mars_logging')
+#time at which we should think mars disconnected from us
+MARS_TIMEOUT = 5
+
 
 class ListenerThread(threading.Thread):
     def __init__(self, q, serverAddr, port, logLevel, errorQueue, name = 'Thread', displayInConsole = True):
@@ -22,6 +25,9 @@ class ListenerThread(threading.Thread):
         self.displayInConsole = displayInConsole
         self.socketTimeout = 3
         self.logLevel = logLevel
+        #ideally we want to stop repeat logs on mars side, but for short term
+        #this will make client more responsive
+        self.lastLogEntry = ""
         
     
     def run(self):
@@ -44,7 +50,7 @@ class ListenerThread(threading.Thread):
             if isReady[0]:
                 try:
                     chunk = listenerConnection.recv(4)
-                    if len(chunk) < 4:
+                    if chunk is None or len(chunk) < 4:
                         break
                     slen = struct.unpack('>L', chunk)[0]
                     chunk = listenerConnection.recv(slen)
@@ -54,14 +60,14 @@ class ListenerThread(threading.Thread):
                     record = logging.makeLogRecord(obj)
 
                     if record.levelno >= self.logLevel:
-                        if self.q is not None:
+                        if self.q is not None and record.msg not in self.lastLogEntry:
                             self.q.put(record)
+                            self.lastLogEntry = record.msg
                         if self.displayInConsole:
                             logger.log(record.levelno, record.msg + ' (' + record.filename + ':' + str(record.lineno) + ')')
                 except socket_error as serr:
                     if serr.errno == errno.ECONNREFUSED or serr.errno == errno.EPIPE:
                         logger.critical('Was not able to connect to "' + self.name + '" socket, closing app')
-                        
                         break
                     raise serr
 

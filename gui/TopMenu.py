@@ -48,7 +48,6 @@ class TopMenu(tk.Menu):
             server: Server Commands Item
             None: Root level
         '''
-        print 'damn', menuRoot
         if menuRoot == 'client':
             self.client_menu.add_command(label=commandName, command = function)
         if menuRoot == 'server':

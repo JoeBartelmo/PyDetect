@@ -39,7 +39,6 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
 
     # define mainapp instance
     mainApplication = MainApplication(root, client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
-
     # menu
     menu_ = TopMenu(root, '../gui/operations.json', client_queue_cmd, 'Commands')
     ### Add custom commands here
@@ -56,6 +55,7 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
     #call destroyCallback on clicking X
     root.protocol('WM_DELETE_WINDOW', destroyCallback)
     
+    root.grid()    
     root.update()
     root.mainloop()
 

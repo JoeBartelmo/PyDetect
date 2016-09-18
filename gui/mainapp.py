@@ -47,34 +47,41 @@ class MainApplication(tk.Frame):
         # Image display label
         self.initial_im = tk.PhotoImage()
         self.image_label = tk.Label(self, image=self.initial_im, width=640,height=720)
-        self.image_label.grid(row=0, column=0, rowspan=2, sticky='nw')
+        #self.image_label.grid(row=0, column=0, rowspan=2, sticky='nw')
+        self.image_label.grid(row=0, column=0, rowspan = 2, sticky = 'nw')
 
         logger.info('Launching telemetry widget')
         # telemetry display widget
         self.telemetry_w = TelemetryWidget(self, client_queue_telem)
-        self.telemetry_w.grid(row=0, column=1, padx=5, pady=5, sticky='nesw')
+        #self.telemetry_w.grid(row=0, column=1, padx=5, pady=5, sticky='nesw')
+        self.telemetry_w.grid(row=0, column=1, sticky='nsew')
 
         logger.info('Launching Control Widget')
         # control and logging widget
         self.command_w = ControlWidget(self, client_queue_cmd, client_queue_log)
-        self.command_w.grid(row=1, column=1, rowspan=2, padx=5, pady=5, sticky='nw')
+        #self.command_w.grid(row=1, column=1, rowspan=2, padx=5, pady=5, sticky='nw')
+        self.command_w.grid(row=1, column=1, sticky='nsew') 
 
         logger.info('Finalizing frame...')
         # radiobuttons for choosing which stream is in focus
-        frame = tk.Frame(self, bd=2, relief='groove')
+        #frame = tk.Frame(self, bd=2, relief='groove')
         self.stream_active = tk.IntVar()
         self.stream_active.set(0)
         self.pump = tk.IntVar()
+        #frame.grid(row=1, column=0, sticky='s')
         
-        tk.Radiobutton(frame, text='Left', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=0, padx=5, pady=5)
-        tk.Radiobutton(frame, text='Center', variable=self.stream_active, value=1, command=self.choose_focus).grid(row=0, column=1, padx=5, pady=5)
-        tk.Radiobutton(frame, text='Right', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=2, padx=5, pady=5)
-        tk.Checkbutton(frame, text='Pumpkin', variable=self.pump).grid(row=0, column=4)
-
-        frame.grid(row=1, column=0, sticky='s')
-
-        logger.info('Mars Client Initialized')
+        #tk.Radiobutton(frame, text='Left', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=0, padx=5, pady=5)
+        #tk.Radiobutton(frame, text='Center', variable=self.stream_active, value=1, command=self.choose_focus).grid(row=0, column=1, padx=5, pady=5)
+        #tk.Radiobutton(frame, text='Right', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=2, padx=5, pady=5)
+        #tk.Checkbutton(frame, text='Pumpkin', variable=self.pump).grid(row=0, column=4)
         self.grid()
+
+        logger.info('Client GUI Initialized')
+        self.parent.grid_columnconfigure(0, weight=1)
+        self.parent.grid_rowconfigure(0, weight=1)
+        for i in range(0,2):
+            self.grid_columnconfigure(i, weight=1)
+            self.grid_rowconfigure(i, weight=1)
 
     def toggle_pumpkin(self, event):
         if self.pump.get() == 1:
@@ -150,7 +157,6 @@ class MainApplication(tk.Frame):
         except Empty:
             r_frame = None
 
-        self.addText(l_frame, c_frame, r_frame)
 
         if l_frame is not None:
             l_frame = cv2.resize(l_frame, (320, 240))
@@ -162,6 +168,7 @@ class MainApplication(tk.Frame):
             r_frame = cv2.resize(r_frame, (320, 240))
             self.displayed_image[:240,320:640,:] = r_frame
 
+        self.addText(l_frame, c_frame, r_frame)
         big_frame = numpy.asarray(self.displayed_image, dtype=numpy.uint8)
 
         imageFromArray = Image.fromarray(big_frame)
@@ -220,23 +227,18 @@ class MainApplication(tk.Frame):
         self.command_w.destroy()
 
         logger.debug('GUI Destorying main application box...')
-        #self.quit()
         self.destroy()
-        #self.parent.quit()
-        #self.parent.destroy()
-            
 
 if __name__ == '__main__':
     root = tk.Tk()   # get root window
     server_ip = 'hyperlooptk1.student.rit.edu'
     in_queue = Queue()
     out_queue = Queue()
+    online_queue = Queue()
 
     # define mainapp instance
-    m = MainApplication(root, in_queue, out_queue, server_ip)
+    m = MainApplication(root, in_queue, out_queue, online_queue, server_ip)
 
     # run forever
     root.mainloop()
-
-
 
