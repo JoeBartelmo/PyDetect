@@ -1,5 +1,6 @@
 import threading
 import sys
+import logging
 from select import select
 sys.path.insert(0, '../mars')
 import run as Mars #note as long as __main__ is defined this will write a usage violation to the console
@@ -25,6 +26,14 @@ class MarsThread(threading.Thread):
 
     def run(self):
         Mars.run(self.config, self.marsCommandQueue, self.marsConnectionQueue, self.marsOnlineQueue, self.debugEnabled)
-
+        '''
+        Here we are on death. Usually Because mars quit, we would expect all logging to stop,
+        but it persists because we still have the server up.
+        To prevent logging handlers from just getting indefinitely larger, we remove them all on quit of mars
+        '''
+        debugLog = logging.getLogger('mars_logging')
+        telemetryLog = logging.getLogger('telemetry_logging')
+        debugLog.handlers = []
+        telemetryLog.handlers = []
     def stop(self):
         self.marsCommandQueue.put(MARS_EXIT_COMMAND)

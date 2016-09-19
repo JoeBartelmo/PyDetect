@@ -82,17 +82,20 @@ try:
         print >>sys.stderr, 'received "%s"' % data
         
         if data is not None:
-            if validate_json(data):
-                listener = ListenerThread(commandQueue, connectionQueue, connection, pingConnection)
-                listener.start()
-                client = SocketManager(commandQueue, connectionQueue, onlineQueue, client_ip, connection, listener) 
-                client.start()
-                try:
-                    online = onlineQueue.get(timeout=2)
-                    if online == 0:
+            if listener is None or listener.stopped():
+                if validate_json(data):
+                    listener = ListenerThread(commandQueue, connectionQueue, connection, pingConnection)
+                    listener.start()
+                    client = SocketManager(commandQueue, connectionQueue, onlineQueue, client_ip, connection, listener) 
+                    client.start()
+                    try:
+                        online = onlineQueue.get(timeout=2)
+                        if online == 0:
+                            startMars(data)
+                    except Empty:
                         startMars(data)
-                except Empty:
-                    startMars(data)
+            else:
+                print 'There is already a client connected, booting new client'
 except KeyboardInterrupt:
     closeAllThreads()
 finally:
