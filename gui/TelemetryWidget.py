@@ -33,18 +33,27 @@ class TelemetryWidget(tk.Frame):
 
     def set_telemetry_ui(self, json_object = None):
         """ Initialize visual elements of widget. """
+        index = 0
         for key, val in self.translationKeys.iteritems():
             # label
             if val['display']:
                 if key not in self.labels:
                     #update label row
                     self.labels[key] = tk.Label(self, text=val['friendly_name'], padx=5, pady=5, bd=2, justify='left', relief='ridge', width=18)
-                    self.labels[key].grid(row=val['display_order'], column=0, sticky='w')
+                    self.labels[key].grid(row=val['display_order'], column=0, sticky='nsew')
                     #update value column
                     self.values[key] = tk.Label(self, padx=5, pady=5, width=18, anchor='w')
-                    self.values[key].grid(row=val['display_order'],column=1, sticky='w')
+                    self.values[key].grid(row=val['display_order'],column=1, sticky='nsew')
                     self.telemetry_data[key] = ''
-                
+                    #make expandable
+                    self.grid_rowconfigure(index, weight=1)
+                    index += 1
+        
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.parent.grid_columnconfigure(0, weight=1)
+        self.parent.grid_rowconfigure(0, weight=1)
+        self.grid()
         self.update()
        
     def set_telemetry_data(self, telemetryData):

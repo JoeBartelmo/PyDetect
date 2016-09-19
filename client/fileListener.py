@@ -42,6 +42,8 @@ class FileListenerThread(threading.Thread):
             if isReady[0]:
                 try:
                     fileNameLength = self.readIntFromSocket(listenerConnection)
+                    if fileNameLength == -1:
+                        break
                     fileName = listenerConnection.recv(fileNameLength)
 
                     logger.info('Downloading file [' + fileName + ']')
@@ -72,7 +74,10 @@ class FileListenerThread(threading.Thread):
         self.stop()
     
     def readIntFromSocket(self, listenerConnection):
-        return int(struct.unpack('I', listenerConnection.recv(4))[0])
+        data = listenerConnection.recv(4)
+        if data is None or len(data) == 0:
+            return -1
+        return int(struct.unpack('I', data)[0])
     
     def stop(self):
         self._stop.set()

@@ -6,53 +6,87 @@ import logging
 logger = logging.getLogger('mars_logging')
 
 class TopMenu(tk.Menu):
+    '''
+    This class loads in a json file from "config_file"
+    and dynamically generates functions based off of the commands
+    specified within. Additionally you may define custom commands
+    in the top menu in the init_ui method
+
+    Note: Our current json file is operations.json defined locally to
+        this file
+    '''
     def __init__(self, parent, config_file, queue, name):
         tk.Menu.__init__(self, parent)
         self.client_queue_in = queue
+        self.name = name
 
+        self.command_menu = tk.Menu(self, tearoff = 0)
+        self.client_menu = tk.Menu(self, tearoff = 0)
         self.init_ui(config_file, name)
 
     def init_ui(self, config_file, name):
         commands_config = self.load_commands(config_file)
 
-        command_menu = tk.Menu(self, tearoff=0)
         for key, val in commands_config.iteritems():
-            
             copyval = '%s' % val['command']
             if val['options'] is None:
-                
-                command_menu.add_command(label=key, command=self.commandFunc(copyval))
-
+                self.command_menu.add_command(label=key, command=self.commandFunc(copyval))
             else:
                 options = tk.Menu(self, tearoff=0)
                 
                 for opt in val['options']:
                     options.add_command(label=opt, command=self.commandFunc(copyval, opt))
-                command_menu.add_cascade(label=key, menu=options)
-        
-        #seperate clientside Commands
-        #processing that links your shit to the graph widget
-        self.add_cascade(label=name, menu=command_menu)
+                self.command_menu.add_cascade(label=key, menu=options)
 
+    def add_menu_item(self, commandName, function, menuRoot = 'client'):
+        '''
+        Adds a new menu item to the TopMenu. 
+        name: Displayed name of the command
+        function: callback function assigned when button is clicked
+        root: MenuItem to append the new operation under
+            client: Client Commands item
+            server: Server Commands Item
+            None: Root level
+        '''
+        if menuRoot == 'client':
+            self.client_menu.add_command(label=commandName, command = function)
+        if menuRoot == 'server':
+            self.command_menu.add_command(label=commandName, command = function)
+        elif menuRoot is None:
+            self.add_command(label=commandName, command = function)
+
+    def finalize_menu_items(self):  
+        '''
+        Adds the menu items this menu
+        '''
+        #updates topmenu with given command_menu
+        self.add_cascade(label = self.name, menu=self.command_menu)
+        #seperate clientside Commands
+        self.add_cascade(label = 'Client Commands', menu = self.client_menu)
+    
     def commandFunc(self, cmd, option=False):
+        '''
+        Because of memory referencing in python, we use a functional technique
+        to avoid referencing the same variable the whole time.
+        '''
         if option == False:
             command = cmd
         else:
             command = cmd + ' ' + option
         
-        def f():
-            #print id(cmd)  # here from debugging
+        def topMenuFunctionReference():
             logger.debug('Piping "' + command + '" to the client')
             self.client_queue_in.put(command)
-        return f
-    
-    def put_thing_on_q(self):
-         logger.debug(self.config())
+        
+        return topMenuFunctionReference
 
     def load_commands(self, config_file):
+        '''
+        Loads in local Command json file
+        '''
         with open(config_file) as f:
             configuration = \
-                json.load(f)#.replace('\n', '').replace(' ', '').replace('\r', '')
+                json.load(f)
         return configuration
 
 if __name__=='__main__':

@@ -57,7 +57,7 @@ class SenderThread(threading.Thread):
 
             if not self.commandQueue.empty():
                 command = self.commandQueue.get()
-                logger.debug('Sending Command " ' + command  + '" to the server')
+                logger.info('Sending Command "' + command  + '" to the server')
                 self.connection.sendall(command)
 
         sock.close()
