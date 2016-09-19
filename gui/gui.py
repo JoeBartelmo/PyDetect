@@ -38,7 +38,8 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
 
 
     # define mainapp instance
-    mainApplication = MainApplication(root, client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
+    mainApplication = MainApplication(root, client_queue_cmd, client_queue_log, client_queue_telem, server_ip) 
+    mainApplication.grid(column = 0, row = 0, sticky="nsew")
     # menu
     menu_ = TopMenu(root, '../gui/operations.json', client_queue_cmd, 'Commands')
     ### Add custom commands here
@@ -49,13 +50,12 @@ def start(client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
 
     # title and icon
     root.wm_title('Hyperloop Imaging Team')
-    img = tk.PhotoImage(os.path.join(os.getcwd(), '../gui/assets/rit_imaging_team.png'))
+    img = tk.PhotoImage('../gui/assets/rit_imaging_team.png')
     root.tk.call('wm', 'iconphoto', root._w, img)
     
     #call destroyCallback on clicking X
     root.protocol('WM_DELETE_WINDOW', destroyCallback)
-    
-    root.grid()    
+     
     root.update()
     root.mainloop()
 

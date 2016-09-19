@@ -35,7 +35,7 @@ class ControlWidget(tk.Frame):
         # entry box for commands
         e = tk.Entry(self, textvariable=self.cmd, width=30)
         e.grid(row=1,column=0, padx=5, pady=5, sticky='ew')
-        e.bind("<Return>", self.send_command)
+        e.bind("<Return>", self.send_command, self)
 
         # send button
         send_b = tk.Button(self, text='Send', command=self.send_command)
@@ -57,7 +57,7 @@ class ControlWidget(tk.Frame):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
  
-    def send_command(self):
+    def send_command(self, *args):
         """ Send command to client. """
         print('Clicked Send Cmd Button')
         cmd = self.cmd.get()

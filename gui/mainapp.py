@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger('mars_logging')
 
 
-CAMERA_PORT_MAP = {'left': 8554, 'right': 8555, 'center': 8556}
+CAMERA_PORT_MAP = {'Left Camera': 8554, 'Right Camera': 8555, 'Front Camera': 8556}
 
 class MainApplication(tk.Frame):
     '''
@@ -26,29 +26,42 @@ class MainApplication(tk.Frame):
         self.parent = parent
         self.stream_order = [0,1,2]
         self.server_ip = server_ip
-
+        #for aspect ratio resizing of image
+        #we found 720/640 to give the most aesthetic view
+        self.imageHeight  = 720 
+        self.imageWidth = 640
+        self.aspectRatio = 720/640
+ 
+        #Left Camera, Center Camera, Right Camera
+        self.streams = [None, None, None]
+        self.displayed_image = numpy.zeros((self.imageHeight,self.imageWidth,3))
+        
         self.init_ui(client_queue_cmd, client_queue_log, client_queue_telem, server_ip)
 
         self.fast = cv2.FastFeatureDetector()
         
         self.runStreams = False
- 
-        #Left Camera, Center Camera, Right Camera
-        self.streams = [None, None, None]
-        self.displayed_image = numpy.zeros((720,640,3))
         
         self.start_streams()
         self.start_telemetry()
-        
+
+    def image_resize(self, event):
+        if abs(event.width - self.imageWidth) > 2 or abs(event.height - self.imageHeight) > 2:
+            self.imageHeight = event.height
+            self.imageWidth = event.width
+     
+            self.displayed_image = numpy.zeros((self.imageHeight,self.imageWidth,3))
+
     def init_ui(self, client_queue_cmd, client_queue_log, client_queue_telem, server_ip):
         """ Initialize visual elements of widget. """
 
         logger.info('Appending photo image widget to main app')
         # Image display label
         self.initial_im = tk.PhotoImage()
-        self.image_label = tk.Label(self, image=self.initial_im, width=640,height=720)
+        self.image_label = tk.Label(self, image=self.initial_im)
         #self.image_label.grid(row=0, column=0, rowspan=2, sticky='nw')
-        self.image_label.grid(row=0, column=0, rowspan = 2, sticky = 'nw')
+        self.image_label.grid(row=0, column=0, rowspan = 2, sticky = 'nsew')
+        self.image_label.bind('<Configure>', self.image_resize)
 
         logger.info('Launching telemetry widget')
         # telemetry display widget
@@ -74,14 +87,15 @@ class MainApplication(tk.Frame):
         #tk.Radiobutton(frame, text='Center', variable=self.stream_active, value=1, command=self.choose_focus).grid(row=0, column=1, padx=5, pady=5)
         #tk.Radiobutton(frame, text='Right', variable=self.stream_active, value=0, command=self.choose_focus).grid(row=0, column=2, padx=5, pady=5)
         #tk.Checkbutton(frame, text='Pumpkin', variable=self.pump).grid(row=0, column=4)
-        self.grid()
-
+        self.grid(row = 0, column=0, sticky="nsew")
         logger.info('Client GUI Initialized')
         self.parent.grid_columnconfigure(0, weight=1)
         self.parent.grid_rowconfigure(0, weight=1)
         for i in range(0,2):
             self.grid_columnconfigure(i, weight=1)
             self.grid_rowconfigure(i, weight=1)
+        
+        #self.bind('<Configure>', self._resize)
 
     def toggle_pumpkin(self, event):
         if self.pump.get() == 1:
@@ -116,9 +130,9 @@ class MainApplication(tk.Frame):
     def addText(self, l_frame, c_frame, r_frame):
         """ Change text on boxes """
         font = cv2.FONT_HERSHEY_SIMPLEX
-        center = (10, 390)
-        topleft = (10, 230)
-        topright = (10, 230)
+        center = (10, (self.imageWidth / 2) + 70)
+        topleft = (10, (self.imageHeight / 3) - 10)
+        topright = (10, (self.imageHeight / 3) - 10)
 
         def setText(l_text, r_text, c_text):
             if l_frame is not None:
@@ -157,23 +171,28 @@ class MainApplication(tk.Frame):
         except Empty:
             r_frame = None
 
-
+        
+        thirdHeight = int(self.imageHeight / 3)
+        halfWidth = int(self.imageWidth / 2)
+        
         if l_frame is not None:
-            l_frame = cv2.resize(l_frame, (320, 240))
-            self.displayed_image[:240,:320,:] = l_frame
+            l_frame = cv2.resize(l_frame, (halfWidth, thirdHeight))
+            self.displayed_image[:thirdHeight,:halfWidth,:] = l_frame
         if c_frame is not None:    
-            c_frame = cv2.resize(c_frame, (640, 480))
-            self.displayed_image[240:, :,:] = c_frame
+            c_frame = cv2.resize(c_frame, (self.imageWidth, self.imageHeight - thirdHeight))
+            self.displayed_image[thirdHeight:, :,:] = c_frame
         if r_frame is not None:
-            r_frame = cv2.resize(r_frame, (320, 240))
-            self.displayed_image[:240,320:640,:] = r_frame
+            r_frame = cv2.resize(r_frame, (self.imageWidth - halfWidth, thirdHeight))
+            self.displayed_image[:thirdHeight,halfWidth:self.imageWidth,:] = r_frame
 
         self.addText(l_frame, c_frame, r_frame)
+        
         big_frame = numpy.asarray(self.displayed_image, dtype=numpy.uint8)
 
         imageFromArray = Image.fromarray(big_frame)
         tkImage = ImageTk.PhotoImage(image=imageFromArray)
-        self.image_label.configure(image=tkImage, width=big_frame.shape[0], height=big_frame.shape[1])
+        self.image_label.configure(image=tkImage)
+        
         self.image_label._image_cache = tkImage  # avoid garbage collection
 
         self.update()
@@ -189,22 +208,21 @@ class MainApplication(tk.Frame):
             logger.info('Streams were already open on GUI, releasing and restarting capture')
             self.runStreams = False
             for s in self.streams:
-                if s is not None and s._vidcap.isOpened():
+                if s is not None and s._vidcap is not None and s._vidcap.isOpened():
                     s.stop()
                     s.join()
                     s = None
-            self.displayed_image = numpy.zeros((720,640,3))
+            self.displayed_image = numpy.zeros((self.imageHeight,self.imageWidth,3))
 
         iteration = 0
         for camera in CAMERA_PORT_MAP:
-            logger.info('Attempting to connect to ' + camera + ' on port ' + str(CAMERA_PORT_MAP[camera]))
-            captureCv = VideoThread(cv2.VideoCapture('rtsp://' + self.server_ip + ':' + str(CAMERA_PORT_MAP[camera]) + '/'), Queue())
+            #logger.info('Attempting to connect to ' + camera + ' on port ' + str(CAMERA_PORT_MAP[camera]))
+            captureCv = VideoThread(camera, 'rtsp://' + self.server_ip + ':' + str(CAMERA_PORT_MAP[camera]) + '/', Queue())
             self.streams[iteration] = captureCv
             iteration += 1
 
         for s in self.streams:
-            if s._vidcap.isOpened():
-                s.start()
+            s.start()
 
         self.runStreams = True
         
