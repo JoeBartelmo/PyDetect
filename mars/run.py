@@ -82,7 +82,7 @@ if __name__=='__main__':
     #TODO: Use python cli module eventually
     if len(sys.argv) > 1 and sys.argv[1] == '-d':
         debugEnabled = True
-    else:
+    elif len(sys.argv) > 1:
         displayUsage()
         sys.exit(1)      
     json_config = sys.argv[0]

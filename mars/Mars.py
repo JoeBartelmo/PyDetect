@@ -53,7 +53,7 @@ class Mars(object):
             serialData = self._arduino.serial_readline()
         #returns none on error as well
         if serialData is None:
-            logger.warning('Could not retrieve data from arduino')
+            #logger.warning('Could not retrieve data from arduino')
             return None
         else:
             serialData = serialData.strip().replace('\0','')

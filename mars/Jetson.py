@@ -97,7 +97,10 @@ class Jetson(object):
 
         #Prompt for input
         if self._q is None:
-            controlCode = raw_input("LED, motion, stream, or control code: \n")
+            try:
+                controlCode = raw_input("LED, motion, stream, or control code: \n")
+            except KeyboardInterrupt:
+                self.exit()
         else:
             controlCode = self._q.get()
         myCodeInput = self.recieveInput(controlCode)
