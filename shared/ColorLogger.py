@@ -26,13 +26,16 @@ COLORS = {
     'ERROR': RED
 }
 
-def initializeLogger(path, level, name, formatter = None, sout = False, colors = False):
+def initializeLogger(path, level, name, formatter = None, sout = False, colors = False, client = False):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
     if formatter is None:
         if colors is True:
-            format_string = "%(levelname)s$RESET: %(message)s"
+            if client == False:
+                format_string = "%(levelname)s$RESET: %(message)s ($BOLD%(filename)s$RESET:%(lineno)d)"
+            else:
+                format_string = "%(levelname)s$RESET: %(message)s"
             color_format = formatter_message(format_string, True)
             formatter = ColoredFormatter(color_format)
         else:

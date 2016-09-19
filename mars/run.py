@@ -9,6 +9,7 @@ import os.path
 import json
 from collections import namedtuple
 from System import System
+sys.path.insert(0, '../shared')
 from ColorLogger import initializeLogger 
 
 marsLoggerName = 'mars_logging'

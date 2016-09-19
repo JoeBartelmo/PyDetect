@@ -5,9 +5,10 @@ from fileListener import FileListenerThread
 from listener import ListenerThread
 import logging
 from Queue import Queue
-from ColorLogger import initializeLogger 
 sys.path.insert(0, '../gui')
 import gui
+sys.path.insert(1, '../shared')
+from ColorLogger import initializeLogger 
 from sender import SenderThread
 
 #ports we use for communication between client and server
